@@ -10,4 +10,6 @@ import lombok.*;
 public class WorkServiceDTO {
     private Long workServiceId;
     private String workServiceState;
+
+
 }
