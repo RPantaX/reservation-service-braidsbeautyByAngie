@@ -1,21 +1,19 @@
-package com.braidsbeautyByAngie.aggregates.dto;
+package com.braidsbeautyByAngie.aggregates.request;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 @Builder
-public class ScheduleDTO {
-    private Long scheduleId;
+@Getter
+public class RequestSchedule {
     private LocalDate scheduleDate;
     private LocalTime scheduleHourStart;
     private LocalTime scheduleHourEnd;
-    private String scheduleState;
-    private Long employeeId;
-
 }

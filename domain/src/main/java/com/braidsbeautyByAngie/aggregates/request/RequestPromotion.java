@@ -1,24 +1,20 @@
-package com.braidsbeautyByAngie.aggregates.dto;
+package com.braidsbeautyByAngie.aggregates.request;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 @Builder
-public class PromotionDTO {
-    private Long promotionId;
-
+@Getter
+public class RequestPromotion {
     private String promotionName;
-
     private String promotionDescription;
-
     private Double promotionDiscountRate;
-
     private Timestamp promotionStartDate;
-
     private Timestamp promotionEndDate;
 }
