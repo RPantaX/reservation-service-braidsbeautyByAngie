@@ -24,8 +24,8 @@ public class ReservationServiceImpl implements ReservationServiceIn{
     }
 
     @Override
-    public ReservationDTO updateReservationIn(Long reservationId, RequestReservation requestReservation) {
-        return reservationServiceOut.updateReservationOut(reservationId, requestReservation);
+    public ReservationDTO updateReservationIn(Long reservationId, List<RequestReservation> requestReservationList) {
+        return reservationServiceOut.updateReservationOut(reservationId, requestReservationList);
     }
 
     @Override

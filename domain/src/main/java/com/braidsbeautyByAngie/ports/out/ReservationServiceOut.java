@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface ReservationServiceOut {
     ReservationDTO createReservationOut(List<RequestReservation> requestReservationList);
-    ReservationDTO updateReservationOut(Long reservationId, RequestReservation requestReservation);
+    ReservationDTO updateReservationOut(Long reservationId, List<RequestReservation> requestReservationList);
     ReservationDTO deleteReservationOut(Long reservationId);
     Optional<ResponseReservation> findReservationByIdOut(Long reservationId);
     ResponseListPageableReservation listReservationByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir);

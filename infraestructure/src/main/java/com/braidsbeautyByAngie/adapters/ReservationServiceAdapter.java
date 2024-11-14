@@ -5,32 +5,42 @@ import com.braidsbeautyByAngie.aggregates.request.RequestReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPageableReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservation;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkService;
-import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkServiceWithoutReservation;
+
 import com.braidsbeautyByAngie.entity.ReservationEntity;
 import com.braidsbeautyByAngie.entity.ScheduleEntity;
 import com.braidsbeautyByAngie.entity.ServiceEntity;
 import com.braidsbeautyByAngie.entity.WorkServiceEntity;
+
 import com.braidsbeautyByAngie.mapper.ReservationMapper;
 import com.braidsbeautyByAngie.mapper.ScheduleMapper;
 import com.braidsbeautyByAngie.mapper.ServiceMapper;
 import com.braidsbeautyByAngie.mapper.WorkServiceMapper;
-import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
+
 import com.braidsbeautyByAngie.repository.ReservationRepository;
 import com.braidsbeautyByAngie.repository.ScheduleRepository;
 import com.braidsbeautyByAngie.repository.ServiceRepository;
 import com.braidsbeautyByAngie.repository.WorkServiceRepository;
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.braidsbeautybyangie.coreservice.aggregates.Constants;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
 
 @Service
 @RequiredArgsConstructor
@@ -82,13 +92,32 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     }
 
     @Override
-    public ReservationDTO updateReservationOut(Long reservationId, RequestReservation requestReservation) {
+    public ReservationDTO updateReservationOut(Long reservationId, List<RequestReservation> requestReservationList) {
+        //las reservaciones solo se pueden eliminar
         return null;
     }
-
+    /**
+     * Marca una reservación como cancelada.
+     *
+     * @param reservationId ID de la reservación a cancelar
+     * @return ReservationDTO de la reservación cancelada
+     */
     @Override
     public ReservationDTO deleteReservationOut(Long reservationId) {
-        return null;
+        logger.info("Starting deletion process for reservation with ID: {}", reservationId);
+
+        ReservationEntity reservationEntity = getReservationEntity(reservationId)
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found for ID: " + reservationId));
+
+        reservationEntity.setReservationState("CANCELADO");
+        reservationEntity.setState(Constants.STATUS_INACTIVE);
+        reservationEntity.setDeletedAt(Constants.getTimestamp());
+        reservationEntity.setModifiedByUser("USER-MODIFIED");
+
+        ReservationEntity deletedReservation = reservationRepository.save(reservationEntity);
+
+        logger.info("Reservation with ID: {} marked as CANCELADO", reservationId);
+        return reservationMapper.mapReservationEntityToDTO(deletedReservation);
     }
 
     @Override
@@ -96,12 +125,10 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
         logger.info("Searching for reservation with ID: {}", reservationId);
         Optional<ReservationEntity> reservationSaved = getReservationEntity(reservationId);
         List<WorkServiceEntity> workServiceEntities = reservationSaved.get().getWorkServiceEntities();
-        List <ResponseWorkService> responseWorkServiceList = workServiceEntities.stream().map(workServiceEntity -> {
-             return  ResponseWorkService.builder()
+        List <ResponseWorkService> responseWorkServiceList = workServiceEntities.stream().map(workServiceEntity -> ResponseWorkService.builder()
                     .serviceDTO(serviceMapper.mapServiceEntityToDTO(workServiceEntity.getServiceEntity()))
                     .scheduleDTO(scheduleMapper.mapScheduleEntityToDTO(workServiceEntity.getScheduleEntity()))
-                    .build();
-        }).toList();
+                    .build()).toList();
         ResponseReservation responseReservation =  ResponseReservation.builder()
                 .reservationDTO(reservationMapper.mapReservationEntityToDTO(reservationSaved.get()))
                 .responseWorkServiceList(responseWorkServiceList)
@@ -112,7 +139,36 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
 
     @Override
     public ResponseListPageableReservation listReservationByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
-        return null;
+        logger.info("Searching all promotions with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        if(reservationRepository.findAllByStateTrueAndPageable(pageable).isEmpty()) return null;
+
+        Page<ReservationEntity> reservationEntityPage = reservationRepository.findAllByStateTrueAndPageable(pageable);
+
+        List<ResponseReservation> responseReservationList = reservationEntityPage.getContent().stream().map(reservation -> {
+            List<WorkServiceEntity> workServiceEntities = reservation.getWorkServiceEntities();
+            List<ResponseWorkService> responseWorkServiceList = workServiceEntities.stream().map(workServiceEntity -> ResponseWorkService.builder()
+                    .serviceDTO(serviceMapper.mapServiceEntityToDTO(workServiceEntity.getServiceEntity()))
+                    .scheduleDTO(scheduleMapper.mapScheduleEntityToDTO(workServiceEntity.getScheduleEntity()))
+                    .build()).toList();
+            return ResponseReservation.builder()
+                    .reservationDTO(reservationMapper.mapReservationEntityToDTO(reservation))
+                    .responseWorkServiceList(responseWorkServiceList)
+                    .build();
+        }).toList();
+
+        ResponseListPageableReservation responseListPageableReservation = ResponseListPageableReservation.builder()
+                .responseReservationList(responseReservationList)
+                .pageNumber(reservationEntityPage.getNumber())
+                .totalElements(reservationEntityPage.getTotalElements())
+                .totalPages(reservationEntityPage.getTotalPages())
+                .pageSize(reservationEntityPage.getSize())
+                .end(reservationEntityPage.isLast())
+                .build();
+        logger.info("Reservations found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        return responseListPageableReservation;
     }
 
     private WorkServiceEntity createWorkServiceEntity(RequestReservation request) {
@@ -136,8 +192,11 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     private boolean reservationExistsById(Long reservationId){
         return reservationRepository.existsReservationIdAndStateTrue(reservationId);
     }
-    private Optional<ReservationEntity> getReservationEntity(Long reservationId){
-        if(!reservationExistsById(reservationId)) throw new RuntimeException("The reservation does not exist.");
+    private Optional<ReservationEntity> getReservationEntity(Long reservationId) {
+        if (!reservationExistsById(reservationId)) {
+            logger.warn("Reservation with ID: {} does not exist or is inactive.", reservationId);
+            throw new EntityNotFoundException("The reservation does not exist or is inactive.");
+        }
         return reservationRepository.findReservationByReservationIdAndStateTrue(reservationId);
     }
 }
