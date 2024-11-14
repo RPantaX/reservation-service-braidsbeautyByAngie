@@ -1,8 +1,11 @@
 package com.braidsbeautyByAngie.aggregates.response.workService;
 
+import com.braidsbeautyByAngie.aggregates.dto.ScheduleDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
 import com.braidsbeautyByAngie.aggregates.dto.WorkServiceDTO;
 import lombok.*;
+
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -10,6 +13,5 @@ import lombok.*;
 @Setter
 @Builder
 public class ResponseWorkServiceWithoutReservation {
-    private WorkServiceDTO workServiceDTO;
-    private ServiceDTO serviceDTO;
+    private ResponseWorkService responseWorkService;
 }

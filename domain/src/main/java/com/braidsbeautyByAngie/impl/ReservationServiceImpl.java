@@ -9,6 +9,7 @@ import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,8 +19,8 @@ public class ReservationServiceImpl implements ReservationServiceIn{
     private final ReservationServiceOut reservationServiceOut;
 
     @Override
-    public ReservationDTO createReservationIn(RequestReservation requestReservation) {
-        return reservationServiceOut.createReservationOut(requestReservation);
+    public ReservationDTO createReservationIn(List<RequestReservation> requestReservationList) {
+        return reservationServiceOut.createReservationOut(requestReservationList);
     }
 
     @Override

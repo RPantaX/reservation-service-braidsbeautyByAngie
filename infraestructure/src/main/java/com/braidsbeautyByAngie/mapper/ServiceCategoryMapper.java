@@ -1,6 +1,8 @@
 package com.braidsbeautyByAngie.mapper;
 
+import com.braidsbeautyByAngie.aggregates.dto.ServiceCategoryDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
+import com.braidsbeautyByAngie.entity.ServiceCategoryEntity;
 import com.braidsbeautyByAngie.entity.ServiceEntity;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -10,11 +12,11 @@ public class ServiceCategoryMapper {
 
     private static final ModelMapper modelMapper = new ModelMapper();
 
-    public ServiceEntity mapServiceDTOToEntity(ServiceDTO serviceDTO){
-        return modelMapper.map(serviceDTO, ServiceEntity.class);
+    public ServiceCategoryEntity mapServiceDTOToEntity(ServiceCategoryDTO serviceCategoryDTO){
+        return modelMapper.map(serviceCategoryDTO, ServiceCategoryEntity.class);
     }
-    public ServiceDTO mapServiceEntityToDTO(ServiceEntity serviceEntity){
-        return modelMapper.map(serviceEntity, ServiceDTO.class);
+    public ServiceCategoryDTO mapServiceEntityToDTO(ServiceCategoryEntity serviceCategoryEntity){
+        return modelMapper.map(serviceCategoryEntity, ServiceCategoryDTO.class);
     }
 
 }

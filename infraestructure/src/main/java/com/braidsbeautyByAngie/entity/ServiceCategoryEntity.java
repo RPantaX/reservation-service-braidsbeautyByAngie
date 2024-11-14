@@ -37,7 +37,7 @@ public class ServiceCategoryEntity {
     @JoinTable(name = "Promotion_Product_Category",
             joinColumns = @JoinColumn(name = "service_category_Id", referencedColumnName = "service_category_Id"),
             inverseJoinColumns = @JoinColumn(name = "promotion_Id", referencedColumnName = "promotion_Id"))
-    private Set<PromotionEntity> promotionEntities;
+    private List<PromotionEntity> promotionEntities;
 
     @OneToMany(mappedBy = "serviceCategoryEntity", cascade = CascadeType.ALL) //Cascade en hibernate significa que cualquier operacion que le hagamos al producto también será para todos los objetos relacionados.
     private List<ServiceEntity> serviceEntities= new ArrayList<>();
