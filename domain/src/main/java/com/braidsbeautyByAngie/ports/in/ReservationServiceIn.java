@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface ReservationServiceIn {
     ReservationDTO createReservationIn(List<RequestReservation> requestReservationList);
-    ReservationDTO updateReservationIn(Long reservationId, RequestReservation requestReservation);
+    ReservationDTO updateReservationIn(Long reservationId, List<RequestReservation> requestReservationList);
     ReservationDTO deleteReservationIn(Long reservationId);
     Optional<ResponseReservation> findReservationByIdIn(Long reservationId);
     ResponseListPageableReservation listReservationByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir);

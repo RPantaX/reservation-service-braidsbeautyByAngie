@@ -1,5 +1,6 @@
 package com.braidsbeautyByAngie.repository;
 
+import com.braidsbeautyByAngie.entity.ReservationEntity;
 import com.braidsbeautyByAngie.entity.WorkServiceEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,4 +20,7 @@ public interface WorkServiceRepository extends JpaRepository<WorkServiceEntity, 
     Optional<WorkServiceEntity> findWorkServiceByIdWithStateTrue(Long workServiceId);
     @Query("SELECT w FROM WorkServiceEntity w WHERE w.state = true")
     Page<WorkServiceEntity> findAllByStateTrueAndPageable(Pageable pageable);
+
+    @Query("SELECT w FROM WorkServiceEntity w WHERE w.reservationEntity = :reservationEntity")
+    List<WorkServiceEntity> findAllByReservationEntity(ReservationEntity reservationEntity);
 }
