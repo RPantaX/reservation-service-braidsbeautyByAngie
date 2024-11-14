@@ -5,10 +5,11 @@ import com.braidsbeautyByAngie.aggregates.request.RequestReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPageableReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservation;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ReservationServiceOut {
-    ReservationDTO createReservationOut(RequestReservation requestReservation);
+    ReservationDTO createReservationOut(List<RequestReservation> requestReservationList);
     ReservationDTO updateReservationOut(Long reservationId, RequestReservation requestReservation);
     ReservationDTO deleteReservationOut(Long reservationId);
     Optional<ResponseReservation> findReservationByIdOut(Long reservationId);

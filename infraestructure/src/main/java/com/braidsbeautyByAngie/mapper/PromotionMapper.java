@@ -20,7 +20,7 @@ public class PromotionMapper {
     public PromotionDTO mapPromotionEntityToDto(PromotionEntity promotionEntity){
         return modelMapper.map(promotionEntity, PromotionDTO.class);
     }
-    public List<PromotionDTO> mapPromotionListToDtoList(Set<PromotionEntity> promotionEntityList) {
+    public List<PromotionDTO> mapPromotionListToDtoList(List<PromotionEntity> promotionEntityList) {
         return promotionEntityList.stream()
                 .map(this::mapPromotionEntityToDto)
                 .collect(Collectors.toList());

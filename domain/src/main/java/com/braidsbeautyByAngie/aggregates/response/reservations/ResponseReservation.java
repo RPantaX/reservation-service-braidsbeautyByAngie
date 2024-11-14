@@ -1,6 +1,7 @@
 package com.braidsbeautyByAngie.aggregates.response.reservations;
 
 import com.braidsbeautyByAngie.aggregates.dto.ReservationDTO;
+import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkService;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkServiceWithoutReservation;
 import lombok.*;
 
@@ -14,5 +15,5 @@ import java.util.List;
 @Builder
 public class ResponseReservation {
     private ReservationDTO reservationDTO;
-    private List <ResponseWorkServiceWithoutReservation> responseWorkServiceWithoutReservationList;
+    private List <ResponseWorkService> responseWorkServiceList;
 }
