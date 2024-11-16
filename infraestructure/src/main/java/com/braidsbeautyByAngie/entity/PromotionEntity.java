@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -39,7 +40,8 @@ public class PromotionEntity {
             joinColumns = @JoinColumn(name = "promotion_Id", referencedColumnName = "promotion_Id"),
             inverseJoinColumns = @JoinColumn(name = "service_category_Id", referencedColumnName = "service_category_Id"))
     private List<ServiceCategoryEntity> productCategoryEntities;
-
+    @OneToMany(mappedBy = "promotionEntity", cascade = CascadeType.ALL)
+    private List<WorkServiceEntity> workServices = new ArrayList<>();
     @Column(name = "state", nullable = false)
     private Boolean state;
 

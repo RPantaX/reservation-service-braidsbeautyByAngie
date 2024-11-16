@@ -8,16 +8,23 @@ import com.braidsbeautyByAngie.aggregates.response.categories.ResponseCategoryWI
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseSubCategory;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
+
+import com.braidsbeautyByAngie.entity.ServiceCategoryEntity;
 import com.braidsbeautyByAngie.entity.ServiceEntity;
+
 import com.braidsbeautyByAngie.mapper.PromotionMapper;
 import com.braidsbeautyByAngie.mapper.ServiceCategoryMapper;
 import com.braidsbeautyByAngie.mapper.ServiceMapper;
-import com.braidsbeautyByAngie.ports.out.ServiceServiceOut;
+
+import com.braidsbeautyByAngie.repository.ServiceCategoryRepository;
 import com.braidsbeautyByAngie.repository.ServiceRepository;
 import com.braidsbeautybyangie.coreservice.aggregates.Constants;
-import lombok.RequiredArgsConstructor;
+
+import com.braidsbeautyByAngie.ports.out.ServiceServiceOut;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,14 +32,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ServiceServiceAdapter implements ServiceServiceOut {
     private final ServiceRepository serviceRepository;
+    private final ServiceCategoryRepository serviceCategoryRepository;
 
     private final ServiceMapper serviceMapper;
     private final ServiceCategoryMapper serviceCategoryMapper;
@@ -45,11 +56,14 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     public ServiceDTO createServiceOut(RequestService requestService) {
         logger.info("Creating service with name: {}", requestService.getServiceName());
         if(serviceExistsByName(requestService.getServiceName())) throw new RuntimeException("The name of the service already exists");
+        ServiceCategoryEntity serviceCategorySaved = serviceCategoryRepository.findServiceCategoryIdAndStateTrue(requestService.getServiceCategoryId()).orElseThrow();
 
         ServiceEntity serviceEntity = ServiceEntity.builder()
                 .serviceDescription(requestService.getServiceDescription())
                 .serviceName(requestService.getServiceName())
                 .serviceDescription(requestService.getServiceDescription())
+                .serviceImage(requestService.getServiceImage())
+                .serviceCategoryEntity(serviceCategorySaved)
                 .durationTimeAprox(requestService.getDurationTimeAprox())
                 .createdAt(Constants.getTimestamp())
                 .modifiedByUser("TEST-CREATED")
@@ -65,22 +79,42 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     @Transactional(readOnly = true)
     public Optional<ResponseService> findServiceByIdOut(Long serviceId) {
         logger.info("Searching for service with ID: {}", serviceId);
-        ServiceEntity serviceEntity = getServiceEntity(serviceId).get();
 
-// Construir subcategorías y promociones para la categoría del producto
-        List<ResponseSubCategory> subCategoryList = serviceEntity.getServiceCategoryEntity().getSubCategories()
-                .stream()
-                .map(subCat -> {
-                    ResponseSubCategory responseSubCategory = new ResponseSubCategory();
-                    responseSubCategory.setServiceCategoryDTO(serviceCategoryMapper.mapServiceEntityToDTO(subCat));
-                    return responseSubCategory;
-                }).toList();
+        // Obtener la entidad del servicio y verificar si está presente
+        Optional<ServiceEntity> optionalServiceEntity = getServiceEntity(serviceId);
+        if (optionalServiceEntity.isEmpty()) {
+            logger.warn("Service with ID {} not found", serviceId);
+            return Optional.empty();
+        }
 
-        List<PromotionDTO> promotionDTOList = promotionMapper.mapPromotionListToDtoList(
-                serviceEntity.getServiceCategoryEntity().getPromotionEntities());
+        ServiceEntity serviceEntity = optionalServiceEntity.get();
 
-        ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceEntity.getServiceCategoryEntity());
+        // Verificar si la categoría del servicio es nula
+        ServiceCategoryEntity serviceCategoryEntity = serviceEntity.getServiceCategoryEntity();
+        List<ResponseSubCategory> subCategoryList = new ArrayList<>();
+        List<PromotionDTO> promotionDTOList = new ArrayList<>();
+        ServiceCategoryDTO serviceCategoryDTO = null;
 
+        if (serviceCategoryEntity != null) {
+            // Si no es nula, mapear subcategorías y promociones
+            subCategoryList = serviceCategoryEntity.getSubCategories() != null
+                    ? serviceCategoryEntity.getSubCategories()
+                    .stream()
+                    .map(subCat -> {
+                        ResponseSubCategory responseSubCategory = new ResponseSubCategory();
+                        responseSubCategory.setServiceCategoryDTO(serviceCategoryMapper.mapServiceEntityToDTO(subCat));
+                        return responseSubCategory;
+                    }).toList()
+                    : new ArrayList<>();
+
+            promotionDTOList = serviceCategoryEntity.getPromotionEntities() != null
+                    ? promotionMapper.mapPromotionListToDtoList(serviceCategoryEntity.getPromotionEntities())
+                    : new ArrayList<>();
+
+            serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity);
+        }
+
+        // Construir ResponseCategoryWIthoutServices con los valores obtenidos
         ResponseCategoryWIthoutServices categoryWIthoutServices = ResponseCategoryWIthoutServices
                 .builder()
                 .responseSubCategoryList(subCategoryList)
@@ -88,10 +122,12 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .promotionDTOList(promotionDTOList)
                 .build();
 
+        // Crear ResponseService y devolverlo
         ResponseService responseService = ResponseService.builder()
                 .serviceDTO(serviceMapper.mapServiceEntityToDTO(serviceEntity))
                 .responseCategoryWIthoutServices(categoryWIthoutServices)
                 .build();
+
         logger.info("Service with ID {} found", serviceId);
         return Optional.of(responseService);
     }
@@ -107,6 +143,13 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
         serviceEntity.setModifiedByUser("TEST-UPDATED");
         serviceEntity.setModifiedAt(Constants.getTimestamp());
 
+        //check if the category exists
+        if(requestService.getServiceCategoryId() != null && serviceCategoryRepository.existByServiceCategoryIdAndStateTrue(requestService.getServiceCategoryId())){
+                ServiceCategoryEntity serviceCategorySaved = serviceCategoryRepository.findServiceCategoryIdAndStateTrue(requestService.getServiceCategoryId()).orElseThrow();
+                serviceEntity.setServiceCategoryEntity(serviceCategorySaved);
+        }
+        else serviceEntity.setServiceCategoryEntity(null);
+
         ServiceEntity serviceUpdated = serviceRepository.save(serviceEntity);
         logger.info("Service updated with ID: {}", serviceUpdated.getServiceId());
         return serviceMapper.mapServiceEntityToDTO(serviceUpdated);
@@ -116,12 +159,13 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     public ServiceDTO deleteServiceOut(Long serviceId) {
         logger.info("Searching service for delete with ID: {}", serviceId);
 
-        Optional<ServiceEntity> serviceEntitySaved = getServiceEntity(serviceId);
-        serviceEntitySaved.get().setModifiedByUser("TEST-DELETED");
-        serviceEntitySaved.get().setDeletedAt(Constants.getTimestamp());
-        serviceEntitySaved.get().setState(Constants.STATUS_INACTIVE);
+        ServiceEntity serviceEntitySaved = getServiceEntity(serviceId).orElseThrow();
+        serviceEntitySaved.setModifiedByUser("TEST-DELETED");
+        serviceEntitySaved.setDeletedAt(Constants.getTimestamp());
+        serviceEntitySaved.setState(Constants.STATUS_INACTIVE);
+        serviceEntitySaved.setServiceCategoryEntity(null);
 
-        ServiceEntity serviceDeleted = serviceRepository.save(serviceEntitySaved.get());
+        ServiceEntity serviceDeleted = serviceRepository.save(serviceEntitySaved);
         logger.info("service deleted with ID: {}", serviceDeleted.getServiceId());
 
         return serviceMapper.mapServiceEntityToDTO(serviceDeleted);
@@ -134,40 +178,48 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        if(serviceRepository.findAllByStateTrueAndPageable(pageable).isEmpty()) return null;
+        if (serviceRepository.findAllByStateTrueAndPageable(pageable).isEmpty()) return null;
 
         Page<ServiceEntity> serviceEntityPage = serviceRepository.findAllByStateTrueAndPageable(pageable);
 
         List<ResponseService> responseServiceList = serviceEntityPage.getContent().stream().map(serviceEntity -> {
 
-            //responseCategory
-            // Construir subcategorías y promociones para la categoría del producto
-            List<ResponseSubCategory> subCategoryList = serviceEntity.getServiceCategoryEntity().getSubCategories()
-                    .stream()
-                    .map(subCat -> {
-                        ResponseSubCategory responseSubCategory = new ResponseSubCategory();
-                        responseSubCategory.setServiceCategoryDTO(serviceCategoryMapper.mapServiceEntityToDTO(subCat));
-                        return responseSubCategory;
-                    }).toList();
+            // Verificar que ServiceCategoryEntity no sea nulo
+            ServiceCategoryEntity serviceCategoryEntity = serviceEntity.getServiceCategoryEntity();
+            ResponseCategoryWIthoutServices categoryWIthoutServices = null;
 
-            List<PromotionDTO> promotionDTOList = promotionMapper.mapPromotionListToDtoList(
-                    serviceEntity.getServiceCategoryEntity().getPromotionEntities());
+            if (serviceCategoryEntity != null) {
+                // Construir subcategorías y promociones para la categoría del producto, verificando subcategorías nulas
+                List<ResponseSubCategory> subCategoryList = serviceCategoryEntity.getSubCategories() != null
+                        ? serviceCategoryEntity.getSubCategories().stream()
+                        .map(subCat -> {
+                            ResponseSubCategory responseSubCategory = new ResponseSubCategory();
+                            responseSubCategory.setServiceCategoryDTO(serviceCategoryMapper.mapServiceEntityToDTO(subCat));
+                            return responseSubCategory;
+                        }).toList()
+                        : Collections.emptyList();
 
-            ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceEntity.getServiceCategoryEntity());
+                // Verificar que PromotionEntities no sea nulo
+                List<PromotionDTO> promotionDTOList = serviceCategoryEntity.getPromotionEntities() != null
+                        ? promotionMapper.mapPromotionListToDtoList(serviceCategoryEntity.getPromotionEntities())
+                        : Collections.emptyList();
 
-            ResponseCategoryWIthoutServices categoryWIthoutServices = ResponseCategoryWIthoutServices
-                    .builder()
-                    .responseSubCategoryList(subCategoryList)
-                    .serviceCategoryDTO(serviceCategoryDTO)
-                    .promotionDTOList(promotionDTOList)
-                    .build();
+                // Crear ServiceCategoryDTO solo si serviceCategoryEntity no es nulo
+                ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity);
 
+                categoryWIthoutServices = ResponseCategoryWIthoutServices.builder()
+                        .responseSubCategoryList(subCategoryList)
+                        .serviceCategoryDTO(serviceCategoryDTO)
+                        .promotionDTOList(promotionDTOList)
+                        .build();
+            }
 
             return ResponseService.builder()
                     .serviceDTO(serviceMapper.mapServiceEntityToDTO(serviceEntity))
                     .responseCategoryWIthoutServices(categoryWIthoutServices)
                     .build();
-        }).collect(Collectors.toList());
+        }).toList();
+
         logger.info("Services found with a total elements: {}", serviceEntityPage.getTotalElements());
         return ResponseListPageableService.builder()
                 .responseServiceList(responseServiceList)

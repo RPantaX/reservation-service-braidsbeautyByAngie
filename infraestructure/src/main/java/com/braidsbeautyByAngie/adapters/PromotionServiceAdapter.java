@@ -111,22 +111,27 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        if (promotionRepository.findAllByStateTrueAndPageable(pageable).isEmpty()) return null;
-
+        // Usar la consulta personalizada con LEFT JOIN FETCH
         Page<PromotionEntity> promotionEntityPage = promotionRepository.findAllByStateTrueAndPageable(pageable);
 
+        if (promotionEntityPage.isEmpty()) return null;
+
         List<ResponsePromotion> responsePromotionList = promotionEntityPage.getContent().stream().map(promotionEntity -> {
-            // Convertir cada PromotionEntity a ResponsePromotion
-            List<ServiceCategoryDTO> serviceCategoryDTOList = promotionEntity.getProductCategoryEntities().stream()
+            // Mapear las categorías solo si existen, de lo contrario, devolver una lista vacía
+            List<ServiceCategoryDTO> serviceCategoryDTOList = promotionEntity.getProductCategoryEntities() != null
+                    ? promotionEntity.getProductCategoryEntities().stream()
                     .map(serviceCategoryMapper::mapServiceEntityToDTO)
-                    .toList();
+                    .toList()
+                    : List.of();
 
             return ResponsePromotion.builder()
                     .promotionDTO(promotionMapper.mapPromotionEntityToDto(promotionEntity))
                     .serviceCategoryDTOList(serviceCategoryDTOList)
                     .build();
         }).toList();
+
         logger.info("Promotions found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+
         return ResponseListPageablePromotion.builder()
                 .responsePromotionList(responsePromotionList)
                 .pageNumber(promotionEntityPage.getNumber())

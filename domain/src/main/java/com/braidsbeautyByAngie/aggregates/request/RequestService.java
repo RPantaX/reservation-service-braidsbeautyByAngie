@@ -16,4 +16,5 @@ public class RequestService {
     private String serviceDescription;
     private String serviceImage;
     private LocalTime durationTimeAprox;
+    private Long serviceCategoryId;
 }

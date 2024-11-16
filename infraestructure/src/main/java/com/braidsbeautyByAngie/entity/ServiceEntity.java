@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.sql.Timestamp;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "service")
@@ -31,8 +33,9 @@ public class ServiceEntity {
     @JoinColumn(name = "service_category_Id")
     private ServiceCategoryEntity serviceCategoryEntity;
 
-    @OneToOne(mappedBy = "serviceEntity", cascade = CascadeType.ALL)
-    private WorkServiceEntity workServiceEntity;
+    @OneToMany(mappedBy = "serviceEntity", cascade = CascadeType.ALL)
+    private List<WorkServiceEntity> workServices = new ArrayList<>();
+
 
     @Column(name = "state", nullable = false)
     private Boolean state;

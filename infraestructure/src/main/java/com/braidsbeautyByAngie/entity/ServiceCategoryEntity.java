@@ -34,7 +34,7 @@ public class ServiceCategoryEntity {
     private List<ServiceCategoryEntity> subCategories = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER, targetEntity = PromotionEntity.class, cascade = CascadeType.PERSIST)
-    @JoinTable(name = "Promotion_Product_Category",
+    @JoinTable(name = "promotion_service_category",
             joinColumns = @JoinColumn(name = "service_category_Id", referencedColumnName = "service_category_Id"),
             inverseJoinColumns = @JoinColumn(name = "promotion_Id", referencedColumnName = "promotion_Id"))
     private List<PromotionEntity> promotionEntities;
