@@ -14,6 +14,9 @@ public interface ScheduleRepository extends JpaRepository<ScheduleEntity, Long> 
 
     @Query(value = "SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM ScheduleEntity s WHERE s.scheduleId = :scheduleId AND s.state = true")
     boolean existsByScheduleIdAndStateTrue(Long scheduleId);
+    @Query("SELECT s FROM ScheduleEntity s WHERE s.scheduleId = :scheduleId AND s.state = true AND s.scheduleState = 'LIBRE'")
+    Optional<ScheduleEntity> findScheduleByIdWithStateTrueAndScheduleStateLIBRE(Long scheduleId);
+
     @Query("SELECT s FROM ScheduleEntity s WHERE s.scheduleId = :scheduleId AND s.state = true")
     Optional<ScheduleEntity> findScheduleByIdWithStateTrue(Long scheduleId);
 

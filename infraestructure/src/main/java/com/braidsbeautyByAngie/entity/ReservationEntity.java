@@ -21,9 +21,9 @@ public class ReservationEntity {
     private Long reservationId;
     @Column(name = "reservation_state", nullable = false)
     private String reservationState;
-    @Column(name = "shopping_cart_item_Id", nullable = false)
+    @Column(name = "shopping_cart_item_Id", nullable = true)
     private Long shoppingCartItemId;
-    @Column(name = "order_line_Id", nullable = false)
+    @Column(name = "order_line_Id", nullable = true)
     private Long orderLineId;
 
     @OneToMany(mappedBy = "reservationEntity", cascade = CascadeType.ALL)

@@ -20,18 +20,22 @@ public class WorkServiceEntity {
     @Column(name = "work_service_state", nullable = false)
     private String workServiceState;
 
-    @OneToOne
-    @JoinColumn(name = "service_Id", referencedColumnName = "service_Id", nullable = true)
+    // Relaciones opcionales
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "service_id", referencedColumnName = "service_id", nullable = true)
     private ServiceEntity serviceEntity;
 
-    @OneToOne
-    @JoinColumn(name = "schedule_Id", referencedColumnName = "schedule_Id", nullable = true)
-    private ScheduleEntity scheduleEntity;
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "promotion_id", referencedColumnName = "promotion_id", nullable = true)
+    private PromotionEntity promotionEntity;
 
     @ManyToOne(optional = true)
-    @JoinColumn(name = "reservation_Id")
-    private ReservationEntity reservationEntity;
+    @JoinColumn(name = "schedule_id", referencedColumnName = "schedule_id", nullable = true)
+    private ScheduleEntity scheduleEntity;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "reservation_id", referencedColumnName = "reservation_id")
+    private ReservationEntity reservationEntity;
     @Column(name = "state", nullable = false)
     private Boolean state;
 

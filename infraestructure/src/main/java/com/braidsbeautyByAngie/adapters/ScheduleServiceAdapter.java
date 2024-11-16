@@ -6,6 +6,9 @@ import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseListPageabl
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseSchedule;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkServiceWithoutReservation;
 import com.braidsbeautyByAngie.entity.ScheduleEntity;
+import com.braidsbeautyByAngie.entity.ServiceEntity;
+import com.braidsbeautyByAngie.entity.WorkServiceEntity;
+import com.braidsbeautyByAngie.mapper.ReservationMapper;
 import com.braidsbeautyByAngie.mapper.ScheduleMapper;
 import com.braidsbeautyByAngie.mapper.ServiceMapper;
 import com.braidsbeautyByAngie.mapper.WorkServiceMapper;
@@ -35,7 +38,7 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
     private final ScheduleMapper scheduleMapper;
     private final ServiceMapper serviceMapper;
     private final WorkServiceMapper workServiceMapper;
-
+    private final ReservationMapper reservationMapper;
     private static final Logger logger = LoggerFactory.getLogger(ScheduleServiceAdapter.class);
 
     @Override
@@ -46,6 +49,7 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
                 .scheduleDate(requestSchedule.getScheduleDate())
                 .scheduleHourStart(requestSchedule.getScheduleHourStart())
                 .scheduleHourEnd(requestSchedule.getScheduleHourEnd())
+                .employeeId(1L)
                 .scheduleState("LIBRE")
                 .createdAt(Constants.getTimestamp())
                 .state(Constants.STATUS_ACTIVE)
@@ -60,20 +64,26 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
     @Transactional(readOnly = true)
     public Optional<ResponseSchedule> findScheduleByIdOut(Long scheduleId) {
         logger.info("Searching for schedule with ID: {}", scheduleId);
-        ScheduleEntity scheduleSaved = getScheduleEntity(scheduleId).get();
 
-        ResponseWorkServiceWithoutReservation responseWorkServiceWithoutReservation = ResponseWorkServiceWithoutReservation.builder()
-                .serviceDTO(serviceMapper.mapServiceEntityToDTO(scheduleSaved.getWorkServiceEntity().getServiceEntity()))
-                .workServiceDTO(workServiceMapper.mapWorkServiceEntityToDTO(scheduleSaved.getWorkServiceEntity()))
-                .build();
+        // Verificar si el ScheduleEntity existe
+        Optional<ScheduleEntity> optionalScheduleSaved = getScheduleEntity(scheduleId);
+        if (optionalScheduleSaved.isEmpty()) {
+            logger.warn("Schedule with ID {} not found", scheduleId);
+            return Optional.empty();
+        }
 
+            ResponseWorkServiceWithoutReservation responseWorkServiceWithoutReservation = ResponseWorkServiceWithoutReservation.builder()
+                    .serviceDTOList(optionalScheduleSaved.get().getWorkServices().stream().map(workService -> serviceMapper.mapServiceEntityToDTO(workService.getServiceEntity())).collect(Collectors.toList()))
+                    .reservationDTOList(optionalScheduleSaved.get().getWorkServices().stream().map(workService -> workService.getReservationEntity() != null ? reservationMapper.mapReservationEntityToDTO(workService.getReservationEntity()) : null).collect(Collectors.toList()))
+                    .build();
+
+        // Crear el ResponseSchedule con el mapeo correspondiente
         ResponseSchedule responseSchedule = ResponseSchedule.builder()
-                .scheduleDTO(scheduleMapper.mapScheduleEntityToDTO(scheduleSaved))
+                .scheduleDTO(scheduleMapper.mapScheduleEntityToDTO(optionalScheduleSaved.get()))
                 .responseWorkServiceWithoutReservation(responseWorkServiceWithoutReservation)
                 .build();
 
         logger.info("Schedule with ID {} found", scheduleId);
-
         return Optional.of(responseSchedule);
     }
 
@@ -107,23 +117,35 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
     @Override
     public ResponseListPageableSchedule listScheduleByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
         logger.info("Searching all schedules with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+
+        // Configuración de ordenamiento y paginación
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
-        if(scheduleRepository.findAllByStateTrueAndPageable(pageable).isEmpty()) return null;
 
+        // Obtención de la página de entidades de Schedule
         Page<ScheduleEntity> scheduleEntityPage = scheduleRepository.findAllByStateTrueAndPageable(pageable);
+
+        // Retornar null si la página de entidades de Schedule está vacía
+        if (scheduleEntityPage.isEmpty()) {
+            return null;
+        }
+
+        // Mapeo de entidades de Schedule a ResponseSchedule
         List<ResponseSchedule> responseScheduleList = scheduleEntityPage.stream().map(scheduleEntity -> {
 
+            // Manejo de posibles valores null para WorkServiceEntity y ServiceEntity
             ResponseWorkServiceWithoutReservation responseWorkServiceWithoutReservation = ResponseWorkServiceWithoutReservation.builder()
-                    .serviceDTO(serviceMapper.mapServiceEntityToDTO(scheduleEntity.getWorkServiceEntity().getServiceEntity()))
-                    .workServiceDTO(workServiceMapper.mapWorkServiceEntityToDTO(scheduleEntity.getWorkServiceEntity()))
+                    .serviceDTOList(scheduleEntity.getWorkServices().stream().map(workService -> serviceMapper.mapServiceEntityToDTO(workService.getServiceEntity())).collect(Collectors.toList()))
+                    .reservationDTOList(scheduleEntity.getWorkServices().stream().map(workService -> workService.getReservationEntity() != null ? reservationMapper.mapReservationEntityToDTO(workService.getReservationEntity()) : null).collect(Collectors.toList()))
                     .build();
 
             return ResponseSchedule.builder()
                     .scheduleDTO(scheduleMapper.mapScheduleEntityToDTO(scheduleEntity))
                     .responseWorkServiceWithoutReservation(responseWorkServiceWithoutReservation)
                     .build();
-        }).collect(Collectors.toList());
+        }).toList();
+
+        // Creación de la respuesta paginada
         ResponseListPageableSchedule responseListPageableSchedule = ResponseListPageableSchedule.builder()
                 .responseScheduleList(responseScheduleList)
                 .pageNumber(scheduleEntityPage.getNumber())

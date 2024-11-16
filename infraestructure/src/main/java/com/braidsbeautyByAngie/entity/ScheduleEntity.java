@@ -6,6 +6,8 @@ import lombok.*;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "schedule")
@@ -29,8 +31,8 @@ public class ScheduleEntity {
     private String scheduleState;
     @Column(name = "employee_Id", nullable = false)
     private Long employeeId;
-    @OneToOne(mappedBy = "scheduleEntity", cascade = CascadeType.ALL)
-    private WorkServiceEntity workServiceEntity;
+    @OneToMany(mappedBy = "scheduleEntity", cascade = CascadeType.ALL)
+    private List<WorkServiceEntity> workServices = new ArrayList<>();
     @Column(name = "state", nullable = false)
     private Boolean state;
 
