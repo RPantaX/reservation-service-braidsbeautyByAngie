@@ -10,7 +10,7 @@ import com.braidsbeautyByAngie.mapper.ServiceMapper;
 import com.braidsbeautyByAngie.mapper.WorkServiceMapper;
 import com.braidsbeautyByAngie.ports.out.WorkServiceServiceOut;
 import com.braidsbeautyByAngie.repository.WorkServiceRepository;
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

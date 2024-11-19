@@ -21,11 +21,15 @@ import com.braidsbeautyByAngie.repository.ServiceRepository;
 import com.braidsbeautyByAngie.repository.WorkServiceRepository;
 import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
 
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.AppExceptions.AppExceptionNotFound;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ServiceCore;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
@@ -57,7 +60,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     private static final Logger logger = LoggerFactory.getLogger(ReservationServiceAdapter.class);
 
     private static final String USER_CREATED = "USER-CREATED";
-    private static final String STATUS_CREATED = "CREADO";
+    private static final String STATUS_CREATED = "RESERVED";
 
     @Override
     @Transactional
@@ -118,17 +121,17 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
         ReservationEntity reservationEntity = getReservationEntity(reservationId)
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found for ID: " + reservationId));
         for (ScheduleEntity scheduleEntity : reservationEntity.getWorkServiceEntities().stream().map(WorkServiceEntity::getScheduleEntity).toList()) {
-            scheduleEntity.setScheduleState("LIBRE");
+            scheduleEntity.setScheduleState("FREE");
             scheduleRepository.save(scheduleEntity);
         }
-        reservationEntity.setReservationState("CANCELADO");
+        reservationEntity.setReservationState("REJECTED");
         reservationEntity.setState(Constants.STATUS_INACTIVE);
         reservationEntity.setDeletedAt(Constants.getTimestamp());
         reservationEntity.setModifiedByUser("USER-MODIFIED");
 
         ReservationEntity deletedReservation = reservationRepository.save(reservationEntity);
 
-        logger.info("Reservation with ID: {} marked as CANCELADO", reservationId);
+        logger.info("Reservation with ID: {} marked as REJECTED", reservationId);
         return reservationMapper.mapReservationEntityToDTO(deletedReservation);
     }
 
@@ -183,11 +186,30 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
         return responseListPageableReservation;
     }
 
+    @Override
+    public List<ServiceCore> reserveReservationOut(Long shopOrderId, Long reservationId) {
+
+        ReservationEntity reservationEntity = reservationRepository.findReservationEntityByReservationIdAndReservationStateIsCreated(reservationId)
+                .orElseThrow(() -> new AppExceptionNotFound("Reservation is in progress or is rejected: " + reservationId));
+
+        reservationEntity.setReservationState("IN_PROGRESS");
+        reservationEntity.setOrderLineId(shopOrderId);
+        reservationRepository.save(reservationEntity);
+        List<ServiceEntity> serviceEntities = workServiceRepository.findServiceEntitiesByReservationIdAndStateTrue(reservationId);
+        //TODO: Agregar Precio a los servicios
+        return serviceEntities.stream().map(
+                serviceEntity -> ServiceCore.builder()
+                        .serviceId(serviceEntity.getServiceId())
+                        .price(BigDecimal.valueOf(200.0))
+                        .build()
+        ).toList();
+    }
+
     private WorkServiceEntity createWorkServiceEntity(RequestReservation request, ReservationEntity reservationEntity) {
         ScheduleEntity scheduleEntity = scheduleRepository
                 .findScheduleByIdWithStateTrueAndScheduleStateLIBRE(request.getScheduleId())
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found for ID or Schedule Not Free: " + request.getScheduleId()));
-        scheduleEntity.setScheduleState("RESERVADO");
+        scheduleEntity.setScheduleState("RESERVED");
         ServiceEntity serviceEntity = serviceRepository
                 .findServiceByIdWithStateTrue(request.getServiceId())
                 .orElseThrow(() -> new EntityNotFoundException("Service not found for ID: " + request.getServiceId()));

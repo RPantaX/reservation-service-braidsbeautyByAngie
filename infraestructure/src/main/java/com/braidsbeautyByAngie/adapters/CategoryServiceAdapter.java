@@ -17,8 +17,8 @@ import com.braidsbeautyByAngie.ports.out.CategoryServiceOut;
 import com.braidsbeautyByAngie.repository.PromotionRepository;
 import com.braidsbeautyByAngie.repository.ServiceCategoryRepository;
 
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
 
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

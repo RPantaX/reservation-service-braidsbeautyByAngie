@@ -13,8 +13,8 @@ import com.braidsbeautyByAngie.mapper.ServiceCategoryMapper;
 import com.braidsbeautyByAngie.ports.out.PromotionServiceOut;
 import com.braidsbeautyByAngie.repository.PromotionRepository;
 
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
 
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

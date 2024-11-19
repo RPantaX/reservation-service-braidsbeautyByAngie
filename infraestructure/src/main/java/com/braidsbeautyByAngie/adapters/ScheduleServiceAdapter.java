@@ -6,15 +6,13 @@ import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseListPageabl
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseSchedule;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkServiceWithoutReservation;
 import com.braidsbeautyByAngie.entity.ScheduleEntity;
-import com.braidsbeautyByAngie.entity.ServiceEntity;
-import com.braidsbeautyByAngie.entity.WorkServiceEntity;
 import com.braidsbeautyByAngie.mapper.ReservationMapper;
 import com.braidsbeautyByAngie.mapper.ScheduleMapper;
 import com.braidsbeautyByAngie.mapper.ServiceMapper;
 import com.braidsbeautyByAngie.mapper.WorkServiceMapper;
 import com.braidsbeautyByAngie.ports.out.ScheduleServiceOut;
 import com.braidsbeautyByAngie.repository.ScheduleRepository;
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

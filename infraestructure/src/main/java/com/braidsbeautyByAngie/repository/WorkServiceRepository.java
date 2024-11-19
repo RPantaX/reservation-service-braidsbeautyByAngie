@@ -1,11 +1,13 @@
 package com.braidsbeautyByAngie.repository;
 
 import com.braidsbeautyByAngie.entity.ReservationEntity;
+import com.braidsbeautyByAngie.entity.ServiceEntity;
 import com.braidsbeautyByAngie.entity.WorkServiceEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,4 +25,12 @@ public interface WorkServiceRepository extends JpaRepository<WorkServiceEntity, 
 
     @Query("SELECT w FROM WorkServiceEntity w WHERE w.reservationEntity = :reservationEntity")
     List<WorkServiceEntity> findAllByReservationEntity(ReservationEntity reservationEntity);
+
+    @Query("SELECT ws.serviceEntity " +
+            "FROM WorkServiceEntity ws " +
+            "WHERE ws.reservationEntity.reservationId = :reservationId " +
+            "AND ws.state = true " +
+            "AND ws.serviceEntity.state = true")
+    List<ServiceEntity> findServiceEntitiesByReservationIdAndStateTrue(@Param("reservationId") Long reservationId);
+
 }

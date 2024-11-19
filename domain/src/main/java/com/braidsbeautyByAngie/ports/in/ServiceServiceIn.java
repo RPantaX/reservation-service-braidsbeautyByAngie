@@ -4,6 +4,7 @@ import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.Service;
 
 import java.util.Optional;
 
@@ -13,4 +14,5 @@ public interface ServiceServiceIn {
     ServiceDTO updateServiceIn(Long serviceId, RequestService requestService);
     ServiceDTO deleteServiceIn(Long serviceId);
     ResponseListPageableService listServiceByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir);
+
 }

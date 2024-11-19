@@ -6,6 +6,7 @@ import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPage
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservation;
 import com.braidsbeautyByAngie.ports.in.ReservationServiceIn;
 import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ServiceCore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -41,5 +42,10 @@ public class ReservationServiceImpl implements ReservationServiceIn{
     @Override
     public ResponseListPageableReservation listReservationByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir) {
         return reservationServiceOut.listReservationByPageOut(pageNumber, pageSize, orderBy, sortDir);
+    }
+
+    @Override
+    public List<ServiceCore> reserveReservationIn(Long shopOrderId, Long reservationId) {
+        return reservationServiceOut.reserveReservationOut(shopOrderId, reservationId);
     }
 }

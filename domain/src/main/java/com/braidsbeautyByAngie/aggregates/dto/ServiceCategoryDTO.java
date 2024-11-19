@@ -9,6 +9,5 @@ import lombok.*;
 @Builder
 public class ServiceCategoryDTO {
     private Long serviceCategoryId;
-
     private String serviceCategoryName;
 }

@@ -3,6 +3,7 @@ package com.braidsbeautyByAngie.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ public class ServiceEntity {
     private String serviceName;
     @Column(name = "service_description", nullable = false)
     private String serviceDescription;
+
+    @Column(name = "service_price", nullable = false)
+    private BigDecimal servicePrice;
     @Column(name = "service_image", nullable = false)
     private String serviceImage;
     @Column(name = "duration_time_aprox", nullable = false)
@@ -35,7 +39,6 @@ public class ServiceEntity {
 
     @OneToMany(mappedBy = "serviceEntity", cascade = CascadeType.ALL)
     private List<WorkServiceEntity> workServices = new ArrayList<>();
-
 
     @Column(name = "state", nullable = false)
     private Boolean state;

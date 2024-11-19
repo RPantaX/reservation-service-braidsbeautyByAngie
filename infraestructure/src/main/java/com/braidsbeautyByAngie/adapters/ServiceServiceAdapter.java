@@ -18,10 +18,10 @@ import com.braidsbeautyByAngie.mapper.ServiceMapper;
 
 import com.braidsbeautyByAngie.repository.ServiceCategoryRepository;
 import com.braidsbeautyByAngie.repository.ServiceRepository;
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
 
 import com.braidsbeautyByAngie.ports.out.ServiceServiceOut;
 
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
