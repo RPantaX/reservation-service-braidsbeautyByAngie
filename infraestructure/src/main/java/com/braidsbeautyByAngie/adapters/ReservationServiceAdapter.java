@@ -192,7 +192,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
         ReservationEntity reservationEntity = reservationRepository.findReservationEntityByReservationIdAndReservationStateIsCreated(reservationId)
                 .orElseThrow(() -> new AppExceptionNotFound("Reservation is in progress or is rejected: " + reservationId));
 
-        reservationEntity.setReservationState("IN_PROGRESS");
+        reservationEntity.setReservationState("APPROVED");
         reservationEntity.setOrderLineId(shopOrderId);
         reservationRepository.save(reservationEntity);
         List<ServiceEntity> serviceEntities = workServiceRepository.findServiceEntitiesByReservationIdAndStateTrue(reservationId);
@@ -204,7 +204,13 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
                         .build()
         ).toList();
     }
-
+    @Override
+    public void cancelReservationOut(Long reservationId) {
+        ReservationEntity reservationEntity = reservationRepository.findReservationByReservationIdAndStateTrue(reservationId)
+                .orElseThrow(() -> new AppExceptionNotFound("Reservation does not exist or is inactive: " + reservationId));
+        reservationEntity.setReservationState(STATUS_CREATED);
+        reservationRepository.save(reservationEntity);
+    }
     private WorkServiceEntity createWorkServiceEntity(RequestReservation request, ReservationEntity reservationEntity) {
         ScheduleEntity scheduleEntity = scheduleRepository
                 .findScheduleByIdWithStateTrueAndScheduleStateLIBRE(request.getScheduleId())

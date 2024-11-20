@@ -63,6 +63,7 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .serviceName(requestService.getServiceName())
                 .serviceDescription(requestService.getServiceDescription())
                 .serviceImage(requestService.getServiceImage())
+                .servicePrice(requestService.getServicePrice())
                 .serviceCategoryEntity(serviceCategorySaved)
                 .durationTimeAprox(requestService.getDurationTimeAprox())
                 .createdAt(Constants.getTimestamp())

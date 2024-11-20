@@ -48,4 +48,9 @@ public class ReservationServiceImpl implements ReservationServiceIn{
     public List<ServiceCore> reserveReservationIn(Long shopOrderId, Long reservationId) {
         return reservationServiceOut.reserveReservationOut(shopOrderId, reservationId);
     }
+
+    @Override
+    public void cancelReservationIn(Long reservationId) {
+        reservationServiceOut.cancelReservationOut(reservationId);
+    }
 }

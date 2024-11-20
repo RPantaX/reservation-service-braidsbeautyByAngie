@@ -2,8 +2,7 @@ package com.braidsbeautyByAngie.adapters.handler;
 
 import com.braidsbeautyByAngie.ports.in.ReservationServiceIn;
 import com.braidsbeautyByAngie.ports.in.ServiceServiceIn;
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.commands.CancelReservationCommand;
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.commands.ReserveServiceCommand;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.commands.*;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ServiceCore;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.events.ServiceReservationFailedEvent;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.events.ServiceReservedEvent;
@@ -33,11 +32,12 @@ public class ServicesCommandsHandler {
     @KafkaHandler
     public void handleCommand(@Payload ReserveServiceCommand command) {
         try {
-            List<ServiceCore>  serviceCoreList =  service.reserveReservationIn(command.getReservationId(), command.getShopOrderId());
+            List<ServiceCore> serviceCoreList = service.reserveReservationIn(command.getShopOrderId(), command.getReservationId());
             ServiceReservedEvent serviceReservedEvent = ServiceReservedEvent.builder()
                     .reservationId(command.getReservationId())
                     .shopOrderId(command.getShopOrderId())
                     .serviceList(serviceCoreList)
+                    .productList(command.getProductList())
                     .build();
             kafkaTemplate.send(servicesEventsTopicName, serviceReservedEvent);
         } catch (Exception e) {
@@ -51,8 +51,16 @@ public class ServicesCommandsHandler {
     }
 
     @KafkaHandler
-    public void handleCommand(@Payload CancelReservationCommand command) {
+    public void handleCommand(@Payload CancelProductAndServiceReservationCommand command) {
+        service.cancelReservationIn(command.getReservationId());
 
+        ProductAndServiceCancelledToOrderEvent event = ProductAndServiceCancelledToOrderEvent.builder()
+                .productList(command.getProductList())
+                .shopOrderId(command.getShopOrderId())
+                .reservationId(command.getReservationId())
+                .build();
+
+        kafkaTemplate.send(servicesEventsTopicName, event);
     }
 
 }

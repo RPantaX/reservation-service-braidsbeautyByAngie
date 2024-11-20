@@ -16,4 +16,5 @@ public interface ReservationServiceOut {
     Optional<ResponseReservation> findReservationByIdOut(Long reservationId);
     ResponseListPageableReservation listReservationByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir);
     List<ServiceCore> reserveReservationOut(Long shopOrderId, Long reservationId);
+    void cancelReservationOut(Long reservationId);
 }

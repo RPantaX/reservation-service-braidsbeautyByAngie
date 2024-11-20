@@ -7,8 +7,8 @@ import com.braidsbeautyByAngie.aggregates.response.categories.ResponseCategory;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseListPageableCategory;
 import com.braidsbeautyByAngie.ports.in.CategoryServiceIn;
 
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
 
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import lombok.RequiredArgsConstructor;

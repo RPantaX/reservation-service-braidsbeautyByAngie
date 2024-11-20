@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 
 @AllArgsConstructor
@@ -17,4 +18,5 @@ public class RequestService {
     private String serviceImage;
     private LocalTime durationTimeAprox;
     private Long serviceCategoryId;
+    private BigDecimal servicePrice;
 }

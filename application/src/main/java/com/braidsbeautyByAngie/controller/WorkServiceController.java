@@ -3,7 +3,7 @@ package com.braidsbeautyByAngie.controller;
 import com.braidsbeautyByAngie.aggregates.dto.WorkServiceDTO;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseListPageableWorkService;
 import com.braidsbeautyByAngie.ports.in.WorkServiceServiceIn;
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Info;

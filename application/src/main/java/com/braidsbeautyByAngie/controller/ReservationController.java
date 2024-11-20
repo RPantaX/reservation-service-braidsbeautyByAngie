@@ -5,7 +5,7 @@ import com.braidsbeautyByAngie.aggregates.request.RequestReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPageableReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservation;
 import com.braidsbeautyByAngie.ports.in.ReservationServiceIn;
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Info;

@@ -17,4 +17,5 @@ public interface ReservationServiceIn {
     Optional<ResponseReservation> findReservationByIdIn(Long reservationId);
     ResponseListPageableReservation listReservationByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir);
     List<ServiceCore> reserveReservationIn(Long shopOrderId, Long reservationId);
+    void cancelReservationIn(Long reservationId);
 }

@@ -5,7 +5,7 @@ import com.braidsbeautyByAngie.aggregates.request.RequestSchedule;
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseListPageableSchedule;
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseSchedule;
 import com.braidsbeautyByAngie.ports.in.ScheduleServiceIn;
-import com.braidsbeautybyangie.coreservice.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Info;
