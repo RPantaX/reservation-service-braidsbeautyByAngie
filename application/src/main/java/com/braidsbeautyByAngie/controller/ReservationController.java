@@ -4,6 +4,7 @@ import com.braidsbeautyByAngie.aggregates.dto.ReservationDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPageableReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservation;
+import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservationDetail;
 import com.braidsbeautyByAngie.ports.in.ReservationServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -41,7 +42,7 @@ public class ReservationController {
 
     @Operation(summary = "List reservation by id")
     @GetMapping(value = "/{reservationId}")
-    public ResponseEntity<Optional<ResponseReservation>> listReservationById(@PathVariable(name = "reservationId") Long reservationId){
+    public ResponseEntity<ResponseReservationDetail> listReservationById(@PathVariable(name = "reservationId") Long reservationId){
         return ResponseEntity.ok(reservationService.findReservationByIdIn(reservationId));
     }
 

@@ -4,8 +4,10 @@ import com.braidsbeautyByAngie.aggregates.dto.ReservationDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPageableReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservation;
+import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservationDetail;
 import com.braidsbeautyByAngie.ports.in.ReservationServiceIn;
 import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ReservationCore;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ServiceCore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,7 +37,7 @@ public class ReservationServiceImpl implements ReservationServiceIn{
     }
 
     @Override
-    public Optional<ResponseReservation> findReservationByIdIn(Long reservationId) {
+    public ResponseReservationDetail findReservationByIdIn(Long reservationId) {
         return reservationServiceOut.findReservationByIdOut(reservationId);
     }
 
@@ -45,7 +47,7 @@ public class ReservationServiceImpl implements ReservationServiceIn{
     }
 
     @Override
-    public List<ServiceCore> reserveReservationIn(Long shopOrderId, Long reservationId) {
+    public ReservationCore reserveReservationIn(Long shopOrderId, Long reservationId) {
         return reservationServiceOut.reserveReservationOut(shopOrderId, reservationId);
     }
 

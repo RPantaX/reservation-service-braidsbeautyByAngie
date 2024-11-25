@@ -1,8 +1,10 @@
 package com.braidsbeautyByAngie.entity;
 
+import com.braidsbeautyByAngie.aggregates.types.ReservationStateEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +22,14 @@ public class ReservationEntity {
     @Column(name = "reservation_Id", nullable = false)
     private Long reservationId;
     @Column(name = "reservation_state", nullable = false)
-    private String reservationState;
+    @Enumerated(EnumType.STRING)
+    private ReservationStateEnum reservationState;
     @Column(name = "shopping_cart_item_Id", nullable = true)
     private Long shoppingCartItemId;
-    @Column(name = "order_line_Id", nullable = true)
-    private Long orderLineId;
-
+    @Column(name = "shop_order_line_Id", nullable = true)
+    private Long shopOrderId;
+    @Column(name = "reservation_total_price", nullable = true)
+    private BigDecimal reservationTotalPrice;
     @OneToMany(mappedBy = "reservationEntity", cascade = CascadeType.ALL)
     private List<WorkServiceEntity> workServiceEntities = new ArrayList<>();
 

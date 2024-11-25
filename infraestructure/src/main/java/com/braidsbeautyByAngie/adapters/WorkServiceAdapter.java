@@ -68,7 +68,7 @@ public class WorkServiceAdapter implements WorkServiceServiceOut {
         logger.info("Searching work-service for cancel with ID: {}", workServiceId);
 
         WorkServiceEntity workServiceSaved = getWorkServiceEntity(workServiceId).get();
-        workServiceSaved.setWorkServiceState("CANCELADO");
+        workServiceSaved.setWorkServiceState("CANCELLED");
 
         WorkServiceEntity workServiceCanceled = workServiceRepository.save(workServiceSaved);
         logger.info("work-service canceled with ID: {}", workServiceCanceled.getWorkServiceId());

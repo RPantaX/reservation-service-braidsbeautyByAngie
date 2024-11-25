@@ -1,5 +1,6 @@
 package com.braidsbeautyByAngie.repository;
 
+import com.braidsbeautyByAngie.entity.PromotionEntity;
 import com.braidsbeautyByAngie.entity.ServiceCategoryEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,4 +21,6 @@ public interface ServiceCategoryRepository extends JpaRepository<ServiceCategory
 
     @Query("SELECT c FROM ServiceCategoryEntity c WHERE c.parentCategory IS NULL AND c.state=true")
     Page<ServiceCategoryEntity> findAllCategoriesPageableAndStatusTrue(Pageable pageable);
+
+
 }

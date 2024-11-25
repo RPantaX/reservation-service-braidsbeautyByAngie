@@ -5,6 +5,7 @@ import com.braidsbeautyByAngie.aggregates.request.RequestSchedule;
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseListPageableSchedule;
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseSchedule;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkServiceWithoutReservation;
+import com.braidsbeautyByAngie.aggregates.types.ScheduleStateEnum;
 import com.braidsbeautyByAngie.entity.ScheduleEntity;
 import com.braidsbeautyByAngie.mapper.ReservationMapper;
 import com.braidsbeautyByAngie.mapper.ScheduleMapper;
@@ -48,7 +49,7 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
                 .scheduleHourStart(requestSchedule.getScheduleHourStart())
                 .scheduleHourEnd(requestSchedule.getScheduleHourEnd())
                 .employeeId(1L)
-                .scheduleState("LIBRE")
+                .scheduleState(ScheduleStateEnum.FREE)
                 .createdAt(Constants.getTimestamp())
                 .state(Constants.STATUS_ACTIVE)
                 .modifiedByUser("Test")
@@ -108,6 +109,8 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
         scheduleSaved.setModifiedByUser("TEST-DELETED");
         scheduleSaved.setDeletedAt(Constants.getTimestamp());
         scheduleSaved.setState(Constants.STATUS_INACTIVE);
+        scheduleSaved.setScheduleState(ScheduleStateEnum.CANCELLED);
+        scheduleSaved = scheduleRepository.save(scheduleSaved);
         logger.info("Schedule deleted with ID: {}", scheduleId);
         return scheduleMapper.mapScheduleEntityToDTO(scheduleSaved);
     }

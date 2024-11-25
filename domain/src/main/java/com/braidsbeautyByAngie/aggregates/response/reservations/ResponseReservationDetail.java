@@ -1,18 +1,17 @@
-package com.braidsbeautyByAngie.aggregates.dto;
+package com.braidsbeautyByAngie.aggregates.response.reservations;
 
 import lombok.*;
 
 import java.math.BigDecimal;
-
+import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Builder
-public class ReservationDTO {
+public class ResponseReservationDetail {
     private Long reservationId;
     private String reservationState;
-    private Long shoppingCartItemId;
-    private Long shopOrderId;
     private BigDecimal reservationTotalPrice;
+    private List<ResponseWorkServiceDetail> responseWorkServiceDetails;
 }

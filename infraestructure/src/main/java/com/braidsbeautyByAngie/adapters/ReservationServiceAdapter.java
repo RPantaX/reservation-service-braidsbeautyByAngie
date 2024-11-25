@@ -4,26 +4,24 @@ import com.braidsbeautyByAngie.aggregates.dto.ReservationDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPageableReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservation;
+import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservationDetail;
+import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseWorkServiceDetail;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkService;
 
-import com.braidsbeautyByAngie.entity.ReservationEntity;
-import com.braidsbeautyByAngie.entity.ScheduleEntity;
-import com.braidsbeautyByAngie.entity.ServiceEntity;
-import com.braidsbeautyByAngie.entity.WorkServiceEntity;
+import com.braidsbeautyByAngie.aggregates.types.ReservationStateEnum;
+import com.braidsbeautyByAngie.aggregates.types.ScheduleStateEnum;
+import com.braidsbeautyByAngie.entity.*;
 
 import com.braidsbeautyByAngie.mapper.ReservationMapper;
 import com.braidsbeautyByAngie.mapper.ScheduleMapper;
 import com.braidsbeautyByAngie.mapper.ServiceMapper;
 
-import com.braidsbeautyByAngie.repository.ReservationRepository;
-import com.braidsbeautyByAngie.repository.ScheduleRepository;
-import com.braidsbeautyByAngie.repository.ServiceRepository;
-import com.braidsbeautyByAngie.repository.WorkServiceRepository;
+import com.braidsbeautyByAngie.repository.*;
 import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.AppExceptions.AppExceptionNotFound;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ServiceCore;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ReservationCore;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,7 +58,8 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     private static final Logger logger = LoggerFactory.getLogger(ReservationServiceAdapter.class);
 
     private static final String USER_CREATED = "USER-CREATED";
-    private static final String STATUS_CREATED = "RESERVED";
+    private static final String STATUS_CREATED = "CREATED";
+    private final PromotionRepository promotionRepository;
 
     @Override
     @Transactional
@@ -72,7 +71,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
         try {
             // Primero, creamos la reserva sin los WorkServiceEntities
             ReservationEntity reservationEntity = ReservationEntity.builder()
-                    .reservationState(STATUS_CREATED)
+                    .reservationState(ReservationStateEnum.CREATED)
                     .createdAt(Constants.getTimestamp())
                     .modifiedByUser(USER_CREATED)
                     .state(Constants.STATUS_ACTIVE)
@@ -92,6 +91,12 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
 
             // Finalmente, asociamos los WorkServiceEntities con la reserva y la guardamos
             savedReservation.setWorkServiceEntities(workServiceEntityList);
+
+            //guardamos el monto total
+            BigDecimal totalReservationPrice = calculateTotalReservation(workServiceEntityList);
+            savedReservation.setReservationTotalPrice(totalReservationPrice);
+            logger.info("Total reservation price calculated: {}", totalReservationPrice);
+
             reservationRepository.save(savedReservation);
 
             logger.info("Reservation created successfully with ID: {}", savedReservation.getReservationId());
@@ -118,13 +123,12 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     public ReservationDTO deleteReservationOut(Long reservationId) {
         logger.info("Starting deletion process for reservation with ID: {}", reservationId);
 
-        ReservationEntity reservationEntity = getReservationEntity(reservationId)
-                .orElseThrow(() -> new EntityNotFoundException("Reservation not found for ID: " + reservationId));
+        ReservationEntity reservationEntity = getReservationEntity(reservationId);
         for (ScheduleEntity scheduleEntity : reservationEntity.getWorkServiceEntities().stream().map(WorkServiceEntity::getScheduleEntity).toList()) {
-            scheduleEntity.setScheduleState("FREE");
+            scheduleEntity.setScheduleState(ScheduleStateEnum.FREE);
             scheduleRepository.save(scheduleEntity);
         }
-        reservationEntity.setReservationState("REJECTED");
+        reservationEntity.setReservationState(ReservationStateEnum.REJECTED);
         reservationEntity.setState(Constants.STATUS_INACTIVE);
         reservationEntity.setDeletedAt(Constants.getTimestamp());
         reservationEntity.setModifiedByUser("USER-MODIFIED");
@@ -136,20 +140,25 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     }
 
     @Override
-    public Optional<ResponseReservation> findReservationByIdOut(Long reservationId) {
+    public ResponseReservationDetail findReservationByIdOut(Long reservationId) {
         logger.info("Searching for reservation with ID: {}", reservationId);
-        Optional<ReservationEntity> reservationSaved = getReservationEntity(reservationId);
-        List<WorkServiceEntity> workServiceEntities = reservationSaved.get().getWorkServiceEntities();
-        List <ResponseWorkService> responseWorkServiceList = workServiceEntities.stream().map(workServiceEntity -> ResponseWorkService.builder()
+        ReservationEntity reservationSaved = getReservationEntity(reservationId);
+
+        List<WorkServiceEntity> workServiceEntities = reservationSaved.getWorkServiceEntities();
+        List <ResponseWorkServiceDetail> responseWorkServiceList = workServiceEntities.stream().map(workServiceEntity -> ResponseWorkServiceDetail.builder()
                     .serviceDTO(serviceMapper.mapServiceEntityToDTO(workServiceEntity.getServiceEntity()))
                     .scheduleDTO(scheduleMapper.mapScheduleEntityToDTO(workServiceEntity.getScheduleEntity()))
                     .build()).toList();
-        ResponseReservation responseReservation =  ResponseReservation.builder()
-                .reservationDTO(reservationMapper.mapReservationEntityToDTO(reservationSaved.get()))
-                .responseWorkServiceList(responseWorkServiceList)
+        ReservationDTO reservationDTO = reservationMapper.mapReservationEntityToDTO(reservationSaved);
+
+        ResponseReservationDetail responseReservation =  ResponseReservationDetail.builder()
+                .reservationId(reservationDTO.getReservationId())
+                .reservationState(reservationDTO.getReservationState())
+                .reservationTotalPrice(reservationDTO.getReservationTotalPrice())
+                .responseWorkServiceDetails(responseWorkServiceList)
                 .build();
         logger.info("Reservation found: {}", reservationId);
-        return Optional.of(responseReservation);
+        return responseReservation;
     }
 
     @Override
@@ -187,35 +196,32 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     }
 
     @Override
-    public List<ServiceCore> reserveReservationOut(Long shopOrderId, Long reservationId) {
+    public ReservationCore reserveReservationOut(Long shopOrderId, Long reservationId) {
 
         ReservationEntity reservationEntity = reservationRepository.findReservationEntityByReservationIdAndReservationStateIsCreated(reservationId)
                 .orElseThrow(() -> new AppExceptionNotFound("Reservation is in progress or is rejected: " + reservationId));
 
-        reservationEntity.setReservationState("APPROVED");
-        reservationEntity.setOrderLineId(shopOrderId);
+        reservationEntity.setReservationState(ReservationStateEnum.APPROVED);
+        reservationEntity.setShopOrderId(shopOrderId);
         reservationRepository.save(reservationEntity);
-        List<ServiceEntity> serviceEntities = workServiceRepository.findServiceEntitiesByReservationIdAndStateTrue(reservationId);
-        //TODO: Agregar Precio a los servicios
-        return serviceEntities.stream().map(
-                serviceEntity -> ServiceCore.builder()
-                        .serviceId(serviceEntity.getServiceId())
-                        .price(BigDecimal.valueOf(200.0))
-                        .build()
-        ).toList();
+
+        return ReservationCore.builder()
+                        .reservationId(reservationId)
+                        .totalPrice(reservationEntity.getReservationTotalPrice())
+                        .build();
     }
     @Override
     public void cancelReservationOut(Long reservationId) {
         ReservationEntity reservationEntity = reservationRepository.findReservationByReservationIdAndStateTrue(reservationId)
                 .orElseThrow(() -> new AppExceptionNotFound("Reservation does not exist or is inactive: " + reservationId));
-        reservationEntity.setReservationState(STATUS_CREATED);
+        reservationEntity.setReservationState(ReservationStateEnum.CREATED);
         reservationRepository.save(reservationEntity);
     }
     private WorkServiceEntity createWorkServiceEntity(RequestReservation request, ReservationEntity reservationEntity) {
         ScheduleEntity scheduleEntity = scheduleRepository
                 .findScheduleByIdWithStateTrueAndScheduleStateLIBRE(request.getScheduleId())
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found for ID or Schedule Not Free: " + request.getScheduleId()));
-        scheduleEntity.setScheduleState("RESERVED");
+        scheduleEntity.setScheduleState(ScheduleStateEnum.RESERVED);
         ServiceEntity serviceEntity = serviceRepository
                 .findServiceByIdWithStateTrue(request.getServiceId())
                 .orElseThrow(() -> new EntityNotFoundException("Service not found for ID: " + request.getServiceId()));
@@ -234,11 +240,36 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     private boolean reservationExistsById(Long reservationId){
         return reservationRepository.existsReservationIdAndStateTrue(reservationId);
     }
-    private Optional<ReservationEntity> getReservationEntity(Long reservationId) {
+    private ReservationEntity getReservationEntity(Long reservationId) {
         if (!reservationExistsById(reservationId)) {
             logger.warn("Reservation with ID: {} does not exist or is inactive.", reservationId);
-            throw new EntityNotFoundException("The reservation does not exist or is inactive.");
+            throw new AppExceptionNotFound("The reservation does not exist or is inactive.");
         }
-        return reservationRepository.findReservationByReservationIdAndStateTrue(reservationId);
+        return reservationRepository.findReservationByReservationIdAndStateTrue(reservationId).orElseThrow(
+                ()-> new AppExceptionNotFound("The reservation does not exist or is inactive."));
+    }
+    private BigDecimal calculateTotalReservation(List<WorkServiceEntity> workServiceEntities) {
+        return workServiceEntities.stream()
+                .map(workServiceEntity -> {
+                    // Obtener el precio base del servicio
+                    BigDecimal servicePrice = workServiceEntity.getServiceEntity().getServicePrice();
+
+                    // Obtener las promociones asociadas al servicio
+                    List<PromotionEntity> promotionEntityList = promotionRepository
+                            .findPromotionsByServiceCategoryId(workServiceEntity.getServiceEntity().getServiceCategoryEntity().getServiceCategoryId());
+
+                    // Ordenar los descuentos de menor a mayor
+                    List<BigDecimal> sortedDiscountRates = promotionEntityList.stream()
+                            .map(PromotionEntity::getPromotionDiscountRate)
+                            .sorted() // Orden ascendente
+                            .toList();
+
+                    // Aplicar los descuentos en orden ascendente
+                    BigDecimal discountedPrice = sortedDiscountRates.stream()
+                            .reduce(servicePrice, (price, discountRate) -> price.subtract(price.multiply(discountRate)));
+
+                    return discountedPrice;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sumamos todos los precios finales
     }
 }

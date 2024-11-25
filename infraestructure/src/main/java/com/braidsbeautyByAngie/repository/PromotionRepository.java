@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -25,4 +26,9 @@ public interface PromotionRepository extends JpaRepository<PromotionEntity, Long
 
     @Query(value = "SELECT p FROM PromotionEntity p WHERE p.state = true")
     Page<PromotionEntity> findAllByStateTrueAndPageable(Pageable pageable);
+
+    @Query("SELECT p FROM PromotionEntity p " +
+            "JOIN p.productCategoryEntities sc " +
+            "WHERE sc.serviceCategoryId = :serviceCategoryId AND p.state = true")
+    List<PromotionEntity> findPromotionsByServiceCategoryId(@Param("serviceCategoryId") Long serviceCategoryId);
 }

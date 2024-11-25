@@ -2,6 +2,7 @@ package com.braidsbeautyByAngie.aggregates.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @AllArgsConstructor
@@ -16,7 +17,7 @@ public class PromotionDTO {
 
     private String promotionDescription;
 
-    private Double promotionDiscountRate;
+    private BigDecimal promotionDiscountRate;
 
     private Timestamp promotionStartDate;
 

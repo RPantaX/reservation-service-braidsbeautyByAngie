@@ -20,6 +20,6 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
     @Query(value = "SELECT r FROM ReservationEntity r WHERE r.state = true")
     Page<ReservationEntity> findAllByStateTrueAndPageable (Pageable pageable);
 
-    @Query(value = "SELECT r FROM ReservationEntity r WHERE r.reservationId = :reservationId AND r.reservationState = 'RESERVED'")
+    @Query(value = "SELECT r FROM ReservationEntity r WHERE r.reservationId = :reservationId AND r.reservationState = 'CREATED'")
     Optional<ReservationEntity> findReservationEntityByReservationIdAndReservationStateIsCreated(Long reservationId);
 }

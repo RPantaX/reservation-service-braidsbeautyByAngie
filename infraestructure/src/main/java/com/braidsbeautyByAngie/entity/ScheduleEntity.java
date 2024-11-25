@@ -1,5 +1,6 @@
 package com.braidsbeautyByAngie.entity;
 
+import com.braidsbeautyByAngie.aggregates.types.ScheduleStateEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,7 +29,8 @@ public class ScheduleEntity {
     @Column(name = "schedule_hour_end", nullable = false)
     private LocalTime scheduleHourEnd;
     @Column(name = "schedule_state", nullable = false)
-    private String scheduleState;
+    @Enumerated(EnumType.STRING)
+    private ScheduleStateEnum scheduleState;
     @Column(name = "employee_Id", nullable = false)
     private Long employeeId;
     @OneToMany(mappedBy = "scheduleEntity", cascade = CascadeType.ALL)
