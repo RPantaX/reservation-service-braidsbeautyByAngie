@@ -19,6 +19,7 @@ import com.braidsbeautyByAngie.repository.ServiceCategoryRepository;
 
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,12 +32,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CategoryServiceAdapter implements CategoryServiceOut {
 
     private final ServiceCategoryRepository serviceCategoryRepository;
@@ -45,13 +45,12 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     private final ServiceCategoryMapper serviceCategoryMapper;
     private final PromotionMapper promotionMapper;
     private final ServiceMapper serviceMapper;
-    private static final Logger logger = LoggerFactory.getLogger(CategoryServiceAdapter.class);
 
     @Override
     @Transactional
     public ServiceCategoryDTO createCategoryOut(RequestCategory requestCategory) {
 
-        logger.info("Creating category with name: {}", requestCategory.getServiceCategoryName());
+        log.info("Creating category with name: {}", requestCategory.getServiceCategoryName());
         if(categoryNameExistsByName(requestCategory.getServiceCategoryName())) throw new RuntimeException("The category name already exists.");
 
         ServiceCategoryEntity serviceCategoryEntity = ServiceCategoryEntity.builder()
@@ -66,13 +65,13 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
         }
 
         ServiceCategoryEntity serviceCategorySaved = serviceCategoryRepository.save(serviceCategoryEntity);
-        logger.info("Category '{}' created successfully with ID: {}",serviceCategorySaved.getServiceCategoryName(),serviceCategorySaved.getServiceCategoryId());
+        log.info("Category '{}' created successfully with ID: {}",serviceCategorySaved.getServiceCategoryName(),serviceCategorySaved.getServiceCategoryId());
         return serviceCategoryMapper.mapServiceEntityToDTO(serviceCategorySaved);
     }
 
     @Override
     public ServiceCategoryDTO createSubCategoryOut(RequestSubCategory requestSubCategory) {
-        logger.info("Creating subcategory with name: {}", requestSubCategory.getServiceSubCategoryName());
+        log.info("Creating subcategory with name: {}", requestSubCategory.getServiceSubCategoryName());
         if (categoryNameExistsByName(requestSubCategory.getServiceSubCategoryName()) ) throw new RuntimeException("The name of the category already exists");
         Optional<ServiceCategoryEntity> productCategoryParent = serviceCategoryRepository.findById(requestSubCategory.getServiceCategoryParentId());
         ServiceCategoryEntity serviceCategoryEntity = ServiceCategoryEntity.builder()
@@ -83,14 +82,14 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
                 .modifiedByUser("prueba")
                 .build();
         ServiceCategoryEntity serviceCategorySaved = serviceCategoryRepository.save(serviceCategoryEntity);
-        logger.info("SubCategory '{}' created successfully with ID: {}",serviceCategorySaved.getServiceCategoryName(),serviceCategorySaved.getServiceCategoryId());
+        log.info("SubCategory '{}' created successfully with ID: {}",serviceCategorySaved.getServiceCategoryName(),serviceCategorySaved.getServiceCategoryId());
         return serviceCategoryMapper.mapServiceEntityToDTO(serviceCategorySaved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ResponseCategory> findCategoryByIdOut(Long categoryId) {
-        logger.info("Searching for Category with ID: {}", categoryId);
+        log.info("Searching for Category with ID: {}", categoryId);
         Optional<ServiceCategoryEntity> serviceCategoryEntity = getServiceCategoryEntity(categoryId);
 
         ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity.get());
@@ -114,53 +113,53 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
                 .serviceDTOList(productDTOList)
                 .promotionDTOList(promotionDTOList)
                 .build();
-        logger.info("Category with ID {} found", categoryId);
+        log.info("Category with ID {} found", categoryId);
         return Optional.ofNullable(responseCategory);
     }
 
     @Override
     @Transactional
     public ServiceCategoryDTO updateCategoryOut(RequestCategory requestCategory, Long categoryId) {
-        logger.info("Searching for update category with ID: {}", categoryId);
+        log.info("Searching for update category with ID: {}", categoryId);
         Optional<ServiceCategoryEntity> serviceCategorySaved = getServiceCategoryEntity(categoryId);
         List<PromotionEntity> promotionEntitySet = promotionRepository.findAllByPromotionIdAndStateTrue(requestCategory.getPromotionListId());
         serviceCategorySaved.get().setServiceCategoryName(requestCategory.getServiceCategoryName());
         serviceCategorySaved.get().setPromotionEntities(promotionEntitySet);
 
         ServiceCategoryEntity serviceCategoryUpdated = serviceCategoryRepository.save(serviceCategorySaved.get());
-        logger.info("Category updated with ID: {}",serviceCategoryUpdated.getServiceCategoryId());
+        log.info("Category updated with ID: {}",serviceCategoryUpdated.getServiceCategoryId());
         return serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryUpdated);
     }
 
     @Override
     public ServiceCategoryDTO updateSubCategoryOut(RequestSubCategory requestSubCategory, Long categoryId) {
-        logger.info("Searching for update subcategory with ID: {}", categoryId);
+        log.info("Searching for update subcategory with ID: {}", categoryId);
         Optional<ServiceCategoryEntity> productSubCategory = getServiceCategoryEntity(categoryId);
         productSubCategory.get().setServiceCategoryName(requestSubCategory.getServiceSubCategoryName());
 
         ServiceCategoryEntity servicetCategoryUpdated = serviceCategoryRepository.save(productSubCategory.get());
-        logger.info("subcategory updated with ID: {}", servicetCategoryUpdated.getServiceCategoryId());
+        log.info("subcategory updated with ID: {}", servicetCategoryUpdated.getServiceCategoryId());
 
         return serviceCategoryMapper.mapServiceEntityToDTO(servicetCategoryUpdated);
     }
 
     @Override
     public ServiceCategoryDTO deleteCategoryOut(Long categoryId) {
-        logger.info("Searching category for delete with ID: {}", categoryId);
+        log.info("Searching category for delete with ID: {}", categoryId);
         Optional<ServiceCategoryEntity> servicetCategorySaved = getServiceCategoryEntity(categoryId);
         servicetCategorySaved.get().setState(Constants.STATUS_INACTIVE);
         servicetCategorySaved.get().setModifiedByUser("PRUEBA");
         servicetCategorySaved.get().setDeletedAt(Constants.getTimestamp());
 
         ServiceCategoryEntity productCategoryDeleted = serviceCategoryRepository.save(servicetCategorySaved.get());
-        logger.info("Category deleted with ID: {}", categoryId);
+        log.info("Category deleted with ID: {}", categoryId);
         return serviceCategoryMapper.mapServiceEntityToDTO(productCategoryDeleted);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseListPageableCategory listCategoryPageableOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
-        logger.info("Searching all categories with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Searching all categories with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
 
         if (serviceCategoryRepository.findAll().isEmpty()) return null;
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
@@ -193,7 +192,7 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
                             .build();
                 })
                 .collect(Collectors.toList());
-        logger.info("Categories found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Categories found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
         // Crear y retornar el objeto paginado de respuesta
         return ResponseListPageableCategory.builder()
                 .responseCategoryList(responseCategoryList)

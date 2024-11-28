@@ -22,6 +22,7 @@ import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.AppExceptions.AppExceptionNotFound;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ReservationCore;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,10 +31,6 @@ import org.springframework.data.domain.Sort;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationServiceAdapter implements ReservationServiceOut {
 
     private final ReservationRepository reservationRepository;
@@ -55,8 +53,6 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     private final ScheduleMapper scheduleMapper;
     private final ServiceMapper serviceMapper;
 
-    private static final Logger logger = LoggerFactory.getLogger(ReservationServiceAdapter.class);
-
     private static final String USER_CREATED = "USER-CREATED";
     private static final String STATUS_CREATED = "CREATED";
     private final PromotionRepository promotionRepository;
@@ -64,7 +60,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     @Override
     @Transactional
     public ReservationDTO createReservationOut(List<RequestReservation> requestReservationList) {
-        logger.info("Starting reservation creation for {} requests", requestReservationList.size());
+        log.info("Starting reservation creation for {} requests", requestReservationList.size());
 
         List<WorkServiceEntity> workServiceEntities = new ArrayList<>();
 
@@ -95,14 +91,14 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
             //guardamos el monto total
             BigDecimal totalReservationPrice = calculateTotalReservation(workServiceEntityList);
             savedReservation.setReservationTotalPrice(totalReservationPrice);
-            logger.info("Total reservation price calculated: {}", totalReservationPrice);
+            log.info("Total reservation price calculated: {}", totalReservationPrice);
 
             reservationRepository.save(savedReservation);
 
-            logger.info("Reservation created successfully with ID: {}", savedReservation.getReservationId());
+            log.info("Reservation created successfully with ID: {}", savedReservation.getReservationId());
             return reservationMapper.mapReservationEntityToDTO(savedReservation);
         } catch (Exception e) {
-            logger.error("Error occurred while creating reservation: {}", e.getMessage());
+            log.error("Error occurred while creating reservation: {}", e.getMessage());
             throw new RuntimeException("Failed to create reservation", e);
         }
     }
@@ -121,7 +117,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     @Override
     @Transactional
     public ReservationDTO deleteReservationOut(Long reservationId) {
-        logger.info("Starting deletion process for reservation with ID: {}", reservationId);
+        log.info("Starting deletion process for reservation with ID: {}", reservationId);
 
         ReservationEntity reservationEntity = getReservationEntity(reservationId);
         for (ScheduleEntity scheduleEntity : reservationEntity.getWorkServiceEntities().stream().map(WorkServiceEntity::getScheduleEntity).toList()) {
@@ -135,13 +131,13 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
 
         ReservationEntity deletedReservation = reservationRepository.save(reservationEntity);
 
-        logger.info("Reservation with ID: {} marked as REJECTED", reservationId);
+        log.info("Reservation with ID: {} marked as REJECTED", reservationId);
         return reservationMapper.mapReservationEntityToDTO(deletedReservation);
     }
 
     @Override
     public ResponseReservationDetail findReservationByIdOut(Long reservationId) {
-        logger.info("Searching for reservation with ID: {}", reservationId);
+        log.info("Searching for reservation with ID: {}", reservationId);
         ReservationEntity reservationSaved = getReservationEntity(reservationId);
 
         List<WorkServiceEntity> workServiceEntities = reservationSaved.getWorkServiceEntities();
@@ -157,13 +153,13 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
                 .reservationTotalPrice(reservationDTO.getReservationTotalPrice())
                 .responseWorkServiceDetails(responseWorkServiceList)
                 .build();
-        logger.info("Reservation found: {}", reservationId);
+        log.info("Reservation found: {}", reservationId);
         return responseReservation;
     }
 
     @Override
     public ResponseListPageableReservation listReservationByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
-        logger.info("Searching all promotions with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Searching all promotions with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
@@ -191,7 +187,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
                 .pageSize(reservationEntityPage.getSize())
                 .end(reservationEntityPage.isLast())
                 .build();
-        logger.info("Reservations found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Reservations found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
         return responseListPageableReservation;
     }
 
@@ -242,7 +238,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     }
     private ReservationEntity getReservationEntity(Long reservationId) {
         if (!reservationExistsById(reservationId)) {
-            logger.warn("Reservation with ID: {} does not exist or is inactive.", reservationId);
+            log.warn("Reservation with ID: {} does not exist or is inactive.", reservationId);
             throw new AppExceptionNotFound("The reservation does not exist or is inactive.");
         }
         return reservationRepository.findReservationByReservationIdAndStateTrue(reservationId).orElseThrow(

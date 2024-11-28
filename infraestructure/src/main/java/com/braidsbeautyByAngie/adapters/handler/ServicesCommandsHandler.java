@@ -1,15 +1,12 @@
 package com.braidsbeautyByAngie.adapters.handler;
 
 import com.braidsbeautyByAngie.ports.in.ReservationServiceIn;
-import com.braidsbeautyByAngie.ports.in.ServiceServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.commands.*;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ReservationCore;
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ServiceCore;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.events.ServiceReservationFailedEvent;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.events.ServiceReservedEvent;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,10 +18,10 @@ import org.springframework.stereotype.Component;
 @Component
 @KafkaListener(topics = "${services.commands.topic.name}")
 @RequiredArgsConstructor
+@Slf4j
 public class ServicesCommandsHandler {
 
     private final ReservationServiceIn service;
-    private static final Logger logger = LoggerFactory.getLogger(ServicesCommandsHandler.class);
     private final KafkaTemplate<String, Object> kafkaTemplate;
     @Value("${services.events.topic.name}")
     private String servicesEventsTopicName;
@@ -39,8 +36,9 @@ public class ServicesCommandsHandler {
                     .productList(command.getProductList())
                     .build();
             kafkaTemplate.send(servicesEventsTopicName, serviceReservedEvent);
+            log.info("Service reserved: {}", serviceReservedEvent);
         } catch (Exception e) {
-            logger.error("Error in ServicesCommandsHandler.handleCommand: {}", e.getMessage());
+            log.error("Error in ServicesCommandsHandler.handleCommand: {}", e.getMessage());
             ServiceReservationFailedEvent serviceReservationFailedEvent = ServiceReservationFailedEvent.builder()
                     .reservationId(command.getReservationId())
                     .productList(command.getProductList())
@@ -59,8 +57,13 @@ public class ServicesCommandsHandler {
                 .shopOrderId(command.getShopOrderId())
                 .reservationId(command.getReservationId())
                 .build();
+        try{
+            log.info("Service cancelled: {}", event);
+            kafkaTemplate.send(servicesEventsTopicName, event);
+        } catch (Exception e) {
+            log.error("Error in ServicesCommandsHandler.handleCommand: {}", e.getMessage());
+        }
 
-        kafkaTemplate.send(servicesEventsTopicName, event);
     }
 
 }

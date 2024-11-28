@@ -22,8 +22,7 @@ import com.braidsbeautyByAngie.repository.ServiceRepository;
 import com.braidsbeautyByAngie.ports.out.ServiceServiceOut;
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +40,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ServiceServiceAdapter implements ServiceServiceOut {
     private final ServiceRepository serviceRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
@@ -49,12 +49,9 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     private final ServiceCategoryMapper serviceCategoryMapper;
     private final PromotionMapper promotionMapper;
 
-    private static final Logger logger = LoggerFactory.getLogger(ServiceServiceAdapter.class);
-
-
     @Override
     public ServiceDTO createServiceOut(RequestService requestService) {
-        logger.info("Creating service with name: {}", requestService.getServiceName());
+        log.info("Creating service with name: {}", requestService.getServiceName());
         if(serviceExistsByName(requestService.getServiceName())) throw new RuntimeException("The name of the service already exists");
         ServiceCategoryEntity serviceCategorySaved = serviceCategoryRepository.findServiceCategoryIdAndStateTrue(requestService.getServiceCategoryId()).orElseThrow();
 
@@ -72,19 +69,19 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .build();
         ServiceEntity serviceCreated = serviceRepository.save(serviceEntity);
 
-        logger.info("Service '{}' created successfully with ID: {}",serviceCreated.getServiceName(),serviceCreated.getServiceId());
+        log.info("Service '{}' created successfully with ID: {}",serviceCreated.getServiceName(),serviceCreated.getServiceId());
         return serviceMapper.mapServiceEntityToDTO(serviceCreated);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ResponseService> findServiceByIdOut(Long serviceId) {
-        logger.info("Searching for service with ID: {}", serviceId);
+        log.info("Searching for service with ID: {}", serviceId);
 
         // Obtener la entidad del servicio y verificar si está presente
         Optional<ServiceEntity> optionalServiceEntity = getServiceEntity(serviceId);
         if (optionalServiceEntity.isEmpty()) {
-            logger.warn("Service with ID {} not found", serviceId);
+            log.warn("Service with ID {} not found", serviceId);
             return Optional.empty();
         }
 
@@ -129,13 +126,13 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .responseCategoryWIthoutServices(categoryWIthoutServices)
                 .build();
 
-        logger.info("Service with ID {} found", serviceId);
+        log.info("Service with ID {} found", serviceId);
         return Optional.of(responseService);
     }
 
     @Override
     public ServiceDTO updateServiceOut(Long serviceId, RequestService requestService) {
-        logger.info("Searching for update service with ID: {}", serviceId);
+        log.info("Searching for update service with ID: {}", serviceId);
         ServiceEntity serviceEntity = getServiceEntity(serviceId).get();
         serviceEntity.setServiceName(requestService.getServiceName());
         serviceEntity.setServiceDescription(requestService.getServiceDescription());
@@ -152,13 +149,13 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
         else serviceEntity.setServiceCategoryEntity(null);
 
         ServiceEntity serviceUpdated = serviceRepository.save(serviceEntity);
-        logger.info("Service updated with ID: {}", serviceUpdated.getServiceId());
+        log.info("Service updated with ID: {}", serviceUpdated.getServiceId());
         return serviceMapper.mapServiceEntityToDTO(serviceUpdated);
     }
 
     @Override
     public ServiceDTO deleteServiceOut(Long serviceId) {
-        logger.info("Searching service for delete with ID: {}", serviceId);
+        log.info("Searching service for delete with ID: {}", serviceId);
 
         ServiceEntity serviceEntitySaved = getServiceEntity(serviceId).orElseThrow();
         serviceEntitySaved.setModifiedByUser("TEST-DELETED");
@@ -167,14 +164,14 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
         serviceEntitySaved.setServiceCategoryEntity(null);
 
         ServiceEntity serviceDeleted = serviceRepository.save(serviceEntitySaved);
-        logger.info("service deleted with ID: {}", serviceDeleted.getServiceId());
+        log.info("service deleted with ID: {}", serviceDeleted.getServiceId());
 
         return serviceMapper.mapServiceEntityToDTO(serviceDeleted);
     }
 
     @Override
     public ResponseListPageableService listServiceByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
-        logger.info("Searching all services with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Searching all services with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
@@ -221,7 +218,7 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                     .build();
         }).toList();
 
-        logger.info("Services found with a total elements: {}", serviceEntityPage.getTotalElements());
+        log.info("Services found with a total elements: {}", serviceEntityPage.getTotalElements());
         return ResponseListPageableService.builder()
                 .responseServiceList(responseServiceList)
                 .pageNumber(serviceEntityPage.getNumber())

@@ -11,9 +11,10 @@ import com.braidsbeautyByAngie.mapper.WorkServiceMapper;
 import com.braidsbeautyByAngie.ports.out.WorkServiceServiceOut;
 import com.braidsbeautyByAngie.repository.WorkServiceRepository;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WorkServiceAdapter implements WorkServiceServiceOut {
 
     private final WorkServiceRepository workServiceRepository;
@@ -34,11 +36,9 @@ public class WorkServiceAdapter implements WorkServiceServiceOut {
     private final ScheduleMapper scheduleMapper;
     private final ReservationMapper reservationMapper;
 
-    private static final Logger logger = LoggerFactory.getLogger(WorkServiceAdapter.class);
-
     @Override
     public ResponseListPageableWorkService listWorkServiceByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
-        logger.info("Searching all work-services with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Searching all work-services with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
         if(workServiceRepository.findAllByStateTrueAndPageable(pageable).isEmpty()) return null;
@@ -59,19 +59,19 @@ public class WorkServiceAdapter implements WorkServiceServiceOut {
                 .end(workServicePage.isLast())
                 .build();
 
-        logger.info("work-services found with a total elements: {}", workServicePage.getTotalElements());
+        log.info("work-services found with a total elements: {}", workServicePage.getTotalElements());
         return responseListPageableWorkService;
     }
 
     @Override
     public WorkServiceDTO cancelWorkServiceOut(Long workServiceId) {
-        logger.info("Searching work-service for cancel with ID: {}", workServiceId);
+        log.info("Searching work-service for cancel with ID: {}", workServiceId);
 
         WorkServiceEntity workServiceSaved = getWorkServiceEntity(workServiceId).get();
         workServiceSaved.setWorkServiceState("CANCELLED");
 
         WorkServiceEntity workServiceCanceled = workServiceRepository.save(workServiceSaved);
-        logger.info("work-service canceled with ID: {}", workServiceCanceled.getWorkServiceId());
+        log.info("work-service canceled with ID: {}", workServiceCanceled.getWorkServiceId());
         return workServiceMapper.mapWorkServiceEntityToDTO(workServiceCanceled);
     }
 

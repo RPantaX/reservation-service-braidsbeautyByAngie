@@ -15,6 +15,7 @@ import com.braidsbeautyByAngie.ports.out.ScheduleServiceOut;
 import com.braidsbeautyByAngie.repository.ScheduleRepository;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -30,19 +31,18 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ScheduleServiceAdapter implements ScheduleServiceOut {
 
     private final ScheduleRepository scheduleRepository;
 
     private final ScheduleMapper scheduleMapper;
     private final ServiceMapper serviceMapper;
-    private final WorkServiceMapper workServiceMapper;
     private final ReservationMapper reservationMapper;
-    private static final Logger logger = LoggerFactory.getLogger(ScheduleServiceAdapter.class);
 
     @Override
     public ScheduleDTO createScheduleOut(RequestSchedule requestSchedule) {
-        logger.info("Creating schedule with name: {}", "Test");
+        log.info("Creating schedule with name: {}", "Test");
 
         ScheduleEntity scheduleEntity = ScheduleEntity.builder()
                 .scheduleDate(requestSchedule.getScheduleDate())
@@ -55,19 +55,19 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
                 .modifiedByUser("Test")
                 .build();
         ScheduleEntity scheduleSaved = scheduleRepository.save(scheduleEntity);
-        logger.info("Schedule '{}' created successfully with ID: {}",scheduleSaved.getScheduleDate(),scheduleSaved.getScheduleId());
+        log.info("Schedule '{}' created successfully with ID: {}",scheduleSaved.getScheduleDate(),scheduleSaved.getScheduleId());
         return scheduleMapper.mapScheduleEntityToDTO(scheduleSaved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ResponseSchedule> findScheduleByIdOut(Long scheduleId) {
-        logger.info("Searching for schedule with ID: {}", scheduleId);
+        log.info("Searching for schedule with ID: {}", scheduleId);
 
         // Verificar si el ScheduleEntity existe
         Optional<ScheduleEntity> optionalScheduleSaved = getScheduleEntity(scheduleId);
         if (optionalScheduleSaved.isEmpty()) {
-            logger.warn("Schedule with ID {} not found", scheduleId);
+            log.warn("Schedule with ID {} not found", scheduleId);
             return Optional.empty();
         }
 
@@ -82,13 +82,13 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
                 .responseWorkServiceWithoutReservation(responseWorkServiceWithoutReservation)
                 .build();
 
-        logger.info("Schedule with ID {} found", scheduleId);
+        log.info("Schedule with ID {} found", scheduleId);
         return Optional.of(responseSchedule);
     }
 
     @Override
     public ScheduleDTO updateScheduleOut(Long scheduleId, RequestSchedule requestSchedule) {
-        logger.info("Searching for update schedule with ID: {}", scheduleId);
+        log.info("Searching for update schedule with ID: {}", scheduleId);
         ScheduleEntity scheduleSaved = getScheduleEntity(scheduleId).get();
 
         scheduleSaved.setScheduleDate(requestSchedule.getScheduleDate());
@@ -98,26 +98,26 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
         scheduleSaved.setModifiedByUser("TEST");
 
         ScheduleEntity scheduleUpdated = scheduleRepository.save(scheduleSaved);
-        logger.info("schedule updated with ID: {}", scheduleUpdated.getScheduleId());
+        log.info("schedule updated with ID: {}", scheduleUpdated.getScheduleId());
         return scheduleMapper.mapScheduleEntityToDTO(scheduleUpdated);
     }
 
     @Override
     public ScheduleDTO deleteScheduleOut(Long scheduleId) {
-        logger.info("Searching schedule for delete with ID: {}", scheduleId);
+        log.info("Searching schedule for delete with ID: {}", scheduleId);
         ScheduleEntity scheduleSaved = getScheduleEntity(scheduleId).get();
         scheduleSaved.setModifiedByUser("TEST-DELETED");
         scheduleSaved.setDeletedAt(Constants.getTimestamp());
         scheduleSaved.setState(Constants.STATUS_INACTIVE);
         scheduleSaved.setScheduleState(ScheduleStateEnum.CANCELLED);
         scheduleSaved = scheduleRepository.save(scheduleSaved);
-        logger.info("Schedule deleted with ID: {}", scheduleId);
+        log.info("Schedule deleted with ID: {}", scheduleId);
         return scheduleMapper.mapScheduleEntityToDTO(scheduleSaved);
     }
 
     @Override
     public ResponseListPageableSchedule listScheduleByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
-        logger.info("Searching all schedules with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Searching all schedules with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
 
         // Configuración de ordenamiento y paginación
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
@@ -156,7 +156,7 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
                 .end(scheduleEntityPage.isLast())
                 .build();
 
-        logger.info("Schedules found with a total elements: {}", responseListPageableSchedule.getTotalElements());
+        log.info("Schedules found with a total elements: {}", responseListPageableSchedule.getTotalElements());
         return responseListPageableSchedule;
     }
 

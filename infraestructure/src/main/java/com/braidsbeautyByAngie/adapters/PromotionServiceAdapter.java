@@ -16,8 +16,7 @@ import com.braidsbeautyByAngie.repository.PromotionRepository;
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,17 +28,16 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PromotionServiceAdapter implements PromotionServiceOut {
     private final PromotionRepository promotionRepository;
 
     private final PromotionMapper promotionMapper;
     private final ServiceCategoryMapper serviceCategoryMapper;
 
-    private static final Logger logger = LoggerFactory.getLogger(PromotionServiceAdapter.class);
-
     @Override
     public PromotionDTO createPromotionOut(RequestPromotion requestPromotion) {
-        logger.info("Creating promotion with name: {}", requestPromotion.getPromotionName());
+        log.info("Creating promotion with name: {}", requestPromotion.getPromotionName());
         if(promotionExistByName(requestPromotion.getPromotionName()))  throw new RuntimeException("The name of the promotion already exists");
         PromotionEntity promotionEntity = PromotionEntity.builder()
                 .promotionName(requestPromotion.getPromotionName())
@@ -52,14 +50,14 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
                 .state(Constants.STATUS_ACTIVE)
                 .build();
         PromotionEntity promotionSaved = promotionRepository.save(promotionEntity);
-        logger.info("Promotion '{}' created successfully with ID: {}",promotionSaved.getPromotionName(),promotionSaved.getPromotionId());
+        log.info("Promotion '{}' created successfully with ID: {}",promotionSaved.getPromotionName(),promotionSaved.getPromotionId());
         return promotionMapper.mapPromotionEntityToDto(promotionSaved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ResponsePromotion> findPromotionByIdOut(Long promotionId) {
-        logger.info("Searching for promotion with ID: {}", promotionId);
+        log.info("Searching for promotion with ID: {}", promotionId);
         PromotionEntity promotionEntity = getPromotionEntity(promotionId).get();
 
         List<ServiceCategoryEntity> serviceCategoryEntityList = promotionEntity.getProductCategoryEntities().stream().toList();
@@ -68,13 +66,13 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
                 .promotionDTO(promotionMapper.mapPromotionEntityToDto(promotionEntity))
                 .serviceCategoryDTOList(productCategoryDTOList)
                 .build();
-        logger.info("Promotion with ID {} found", promotionId);
+        log.info("Promotion with ID {} found", promotionId);
         return Optional.of(responsePromotion);
     }
 
     @Override
     public PromotionDTO updatePromotionOut(Long promotionId, RequestPromotion requestPromotion) {
-        logger.info("Searching for update promotion with ID: {}", promotionId);
+        log.info("Searching for update promotion with ID: {}", promotionId);
         PromotionEntity promotionEntity = getPromotionEntity(promotionId).get();
         promotionEntity.setPromotionName(requestPromotion.getPromotionName());
         promotionEntity.setPromotionDescription(requestPromotion.getPromotionDescription());
@@ -85,13 +83,13 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
         promotionEntity.setModifiedAt(Constants.getTimestamp());
 
         PromotionEntity promotionEntityUpdated = promotionRepository.save(promotionEntity);
-        logger.info("promotion updated with ID: {}", promotionEntityUpdated.getPromotionId());
+        log.info("promotion updated with ID: {}", promotionEntityUpdated.getPromotionId());
         return promotionMapper.mapPromotionEntityToDto(promotionEntityUpdated);
     }
 
     @Override
     public PromotionDTO deletePromotionOut(Long promotionId) {
-        logger.info("Searching promotion for delete with ID: {}", promotionId);
+        log.info("Searching promotion for delete with ID: {}", promotionId);
         List<ServiceCategoryEntity> serviceCategoryEntityList = new ArrayList<>();
         PromotionEntity promotionEntityOptional = getPromotionEntity(promotionId).get();
         promotionEntityOptional.setModifiedByUser("TEST");
@@ -99,14 +97,14 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
         promotionEntityOptional.setProductCategoryEntities(serviceCategoryEntityList);
         promotionEntityOptional.setState(Constants.STATUS_INACTIVE);
         PromotionEntity promotionDeleted = promotionRepository.save(promotionEntityOptional);
-        logger.info("Product deleted with ID: {}", promotionId);
+        log.info("Product deleted with ID: {}", promotionId);
         return promotionMapper.mapPromotionEntityToDto(promotionDeleted);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseListPageablePromotion listPromotionByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir) {
-        logger.info("Searching all promotions with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Searching all promotions with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
@@ -130,7 +128,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
                     .build();
         }).toList();
 
-        logger.info("Promotions found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+        log.info("Promotions found with the following parameters: {}", Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
 
         return ResponseListPageablePromotion.builder()
                 .responsePromotionList(responsePromotionList)
