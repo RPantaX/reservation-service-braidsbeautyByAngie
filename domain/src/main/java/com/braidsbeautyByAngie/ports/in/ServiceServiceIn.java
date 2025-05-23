@@ -13,5 +13,5 @@ public interface ServiceServiceIn {
     ServiceDTO updateServiceIn(Long serviceId, RequestService requestService);
     ServiceDTO deleteServiceIn(Long serviceId);
     ResponseListPageableService listServiceByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir);
-
+    ResponseListPageableService listServiceByPageByCategoryIn(int pageNumber, int pageSize, String orderBy, String sortDir, Long categoryId);
 }

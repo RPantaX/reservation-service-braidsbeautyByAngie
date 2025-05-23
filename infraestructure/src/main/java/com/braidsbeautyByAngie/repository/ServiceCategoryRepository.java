@@ -24,4 +24,7 @@ public interface ServiceCategoryRepository extends JpaRepository<ServiceCategory
     Page<ServiceCategoryEntity> findAllCategoriesPageableAndStatusTrue(Pageable pageable);
     @Query("SELECT c FROM ServiceCategoryEntity c WHERE c.parentCategory IS NULL AND c.state=true")
     List<ServiceCategoryEntity> findAllByStateTrue();
+
+    @Query("SELECT c FROM ServiceCategoryEntity c WHERE c.parentCategory.serviceCategoryId = :parentCategoryId AND c.state = true")
+    Page<ServiceCategoryEntity> findAllByParentCategoryAndStateTrue(Long parentCategoryId, Pageable pageable);
 }

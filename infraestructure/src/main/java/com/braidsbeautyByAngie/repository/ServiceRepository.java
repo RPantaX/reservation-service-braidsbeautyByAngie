@@ -23,4 +23,6 @@ public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
 
     @Query("SELECT s FROM ServiceEntity s WHERE s.state = true")
     Page<ServiceEntity> findAllByStateTrueAndPageable(Pageable pageable);
+    @Query("SELECT s FROM ServiceEntity s WHERE s.serviceCategoryEntity.serviceCategoryId = :categoryId AND s.state = true")
+    Page<ServiceEntity> findAllByCategoryIdAndStateTrue(Long categoryId, Pageable pageable);
 }

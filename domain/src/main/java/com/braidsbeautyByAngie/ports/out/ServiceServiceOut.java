@@ -13,4 +13,5 @@ public interface ServiceServiceOut {
     ServiceDTO updateServiceOut(Long serviceId, RequestService requestService);
     ServiceDTO deleteServiceOut(Long serviceId);
     ResponseListPageableService listServiceByPageOut(int pageNumber, int pageSize, String orderBy, String sortDir);
+    ResponseListPageableService listServiceByPageByCategoryOut(int pageNumber, int pageSize, String orderBy, String sortDir, Long categoryId);
 }

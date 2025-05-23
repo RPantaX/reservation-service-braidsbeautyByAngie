@@ -59,4 +59,14 @@ public class ServiceController {
         return ResponseEntity.ok(serviceService.deleteServiceIn(serviceId));
     }
 
+    @Operation(summary = "List all services by category")
+    @GetMapping("/list/category/{categoryId}")
+    public ResponseEntity<ResponseListPageableService> listServiceByPageByCategory(@RequestParam(value = "pageNo", defaultValue = Constants.NUM_PAG_BY_DEFECT, required = false) int pageNo,
+                                                                                     @RequestParam(value = "pageSize", defaultValue = Constants.SIZE_PAG_BY_DEFECT, required = false) int pageSize,
+                                                                                     @RequestParam(value = "sortBy", defaultValue = Constants.ORDER_BY_DEFECT_ALL, required = false) String sortBy,
+                                                                                     @RequestParam(value = "sortDir", defaultValue = Constants.ORDER_DIRECT_BY_DEFECT, required = false) String sortDir,
+                                                                                     @PathVariable(name = "categoryId") Long categoryId){
+        return ResponseEntity.ok(serviceService.listServiceByPageByCategoryIn(pageNo, pageSize, sortBy, sortDir, categoryId));
+    }
+
 }

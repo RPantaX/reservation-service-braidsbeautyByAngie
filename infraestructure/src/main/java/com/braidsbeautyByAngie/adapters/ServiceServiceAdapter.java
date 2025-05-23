@@ -229,6 +229,64 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .build();
     }
 
+    @Override
+    public ResponseListPageableService listServiceByPageByCategoryOut(int pageNumber, int pageSize, String orderBy, String sortDir, Long categoryId) {
+        log.info("Searching services by category ID: {} with the following parameters: {}", categoryId, Constants.parametersForLogger(pageNumber, pageSize, orderBy, sortDir));
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(orderBy).ascending() : Sort.by(orderBy).descending();
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        Page<ServiceEntity> serviceEntityPage = serviceRepository.findAllByCategoryIdAndStateTrue(categoryId, pageable);
+
+        if (serviceEntityPage.isEmpty()) {
+            log.info("No services found for category ID: {}", categoryId);
+            return null;
+        }
+
+        List<ResponseService> responseServiceList = serviceEntityPage.getContent().stream().map(serviceEntity -> {
+            ServiceCategoryEntity serviceCategoryEntity = serviceEntity.getServiceCategoryEntity();
+            ResponseCategoryWIthoutServices categoryWIthoutServices = null;
+
+            if (serviceCategoryEntity != null) {
+                List<ResponseSubCategory> subCategoryList = serviceCategoryEntity.getSubCategories() != null
+                        ? serviceCategoryEntity.getSubCategories().stream()
+                        .map(subCat -> {
+                            ResponseSubCategory responseSubCategory = new ResponseSubCategory();
+                            responseSubCategory.setServiceCategoryDTO(serviceCategoryMapper.mapServiceEntityToDTO(subCat));
+                            return responseSubCategory;
+                        }).toList()
+                        : Collections.emptyList();
+
+                List<PromotionDTO> promotionDTOList = serviceCategoryEntity.getPromotionEntities() != null
+                        ? promotionMapper.mapPromotionListToDtoList(serviceCategoryEntity.getPromotionEntities())
+                        : Collections.emptyList();
+
+                ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity);
+
+                categoryWIthoutServices = ResponseCategoryWIthoutServices.builder()
+                        .responseSubCategoryList(subCategoryList)
+                        .serviceCategoryDTO(serviceCategoryDTO)
+                        .promotionDTOList(promotionDTOList)
+                        .build();
+            }
+
+            return ResponseService.builder()
+                    .serviceDTO(serviceMapper.mapServiceEntityToDTO(serviceEntity))
+                    .responseCategoryWIthoutServices(categoryWIthoutServices)
+                    .build();
+        }).toList();
+
+        log.info("Services found for category ID: {} with total elements: {}", categoryId, serviceEntityPage.getTotalElements());
+        return ResponseListPageableService.builder()
+                .responseServiceList(responseServiceList)
+                .pageNumber(serviceEntityPage.getNumber())
+                .totalElements(serviceEntityPage.getTotalElements())
+                .totalPages(serviceEntityPage.getTotalPages())
+                .pageSize(serviceEntityPage.getSize())
+                .end(serviceEntityPage.isLast())
+                .build();
+    }
+
     private boolean serviceExistsByName(String serviceName){
         return serviceRepository.existsByServiceName(serviceName);
     }

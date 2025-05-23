@@ -41,4 +41,9 @@ public class ServiceServiceImpl implements ServiceServiceIn {
     public ResponseListPageableService listServiceByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir) {
         return serviceServiceOut.listServiceByPageOut(pageNumber, pageSize, orderBy, sortDir);
     }
+
+    @Override
+    public ResponseListPageableService listServiceByPageByCategoryIn(int pageNumber, int pageSize, String orderBy, String sortDir, Long categoryId) {
+        return serviceServiceOut.listServiceByPageByCategoryOut(pageNumber, pageSize, orderBy, sortDir, categoryId);
+    }
 }
