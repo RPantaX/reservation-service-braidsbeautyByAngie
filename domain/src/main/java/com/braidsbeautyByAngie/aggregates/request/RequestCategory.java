@@ -11,6 +11,6 @@ import java.util.List;
 @Builder
 @Getter
 public class RequestCategory {
-    private String serviceCategoryName;
+    private String categoryName;
     private List<Long> promotionListId;
 }

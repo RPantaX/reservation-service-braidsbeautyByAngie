@@ -31,4 +31,7 @@ public interface PromotionRepository extends JpaRepository<PromotionEntity, Long
             "JOIN p.productCategoryEntities sc " +
             "WHERE sc.serviceCategoryId = :serviceCategoryId AND p.state = true")
     List<PromotionEntity> findPromotionsByServiceCategoryId(@Param("serviceCategoryId") Long serviceCategoryId);
+
+    @Query(value = "SELECT p FROM PromotionEntity p WHERE p.state = true")
+    List<PromotionEntity> findAllByStateTrue();
 }

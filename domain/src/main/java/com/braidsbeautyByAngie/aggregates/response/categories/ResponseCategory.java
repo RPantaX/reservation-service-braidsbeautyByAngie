@@ -12,8 +12,8 @@ import java.util.List;
 @Getter
 @Setter
 public class ResponseCategory {
-    private ServiceCategoryDTO serviceCategoryDTO;
+    private Long productCategoryId;
+    private String productCategoryName;
     private List<ResponseSubCategory> responseSubCategoryList;
     private List<PromotionDTO> promotionDTOList;
-    private List<ServiceDTO> serviceDTOList;
 }

@@ -10,6 +10,7 @@ import com.braidsbeautyByAngie.ports.out.CategoryServiceOut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -49,5 +50,10 @@ public class CategoryServiceImpl implements CategoryServiceIn {
     @Override
     public ResponseListPageableCategory listCategoryPageableIn(int pageNumber, int pageSize, String orderBy, String sortDir) {
         return categoryServiceOut.listCategoryPageableOut(pageNumber, pageSize, orderBy, sortDir);
+    }
+
+    @Override
+    public List<ServiceCategoryDTO> listCategoryIn() {
+        return categoryServiceOut.listCategoryOut();
     }
 }

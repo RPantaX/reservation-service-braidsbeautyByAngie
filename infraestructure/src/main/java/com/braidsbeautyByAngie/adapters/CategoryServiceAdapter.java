@@ -50,11 +50,11 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     @Transactional
     public ServiceCategoryDTO createCategoryOut(RequestCategory requestCategory) {
 
-        log.info("Creating category with name: {}", requestCategory.getServiceCategoryName());
-        if(categoryNameExistsByName(requestCategory.getServiceCategoryName())) throw new RuntimeException("The category name already exists.");
+        log.info("Creating category with name: {}", requestCategory.getCategoryName());
+        if(categoryNameExistsByName(requestCategory.getCategoryName())) throw new RuntimeException("The category name already exists.");
 
         ServiceCategoryEntity serviceCategoryEntity = ServiceCategoryEntity.builder()
-                .serviceCategoryName(requestCategory.getServiceCategoryName())
+                .serviceCategoryName(requestCategory.getCategoryName())
                 .state(Constants.STATUS_ACTIVE)
                 .modifiedByUser("Test")
                 .createdAt(Constants.getTimestamp())
@@ -93,7 +93,6 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
         Optional<ServiceCategoryEntity> serviceCategoryEntity = getServiceCategoryEntity(categoryId);
 
         ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity.get());
-        List<ServiceDTO> productDTOList = serviceCategoryEntity.get().getServiceEntities().stream().map(serviceMapper::mapServiceEntityToDTO).collect(Collectors.toList());
         List<PromotionDTO> promotionDTOList = promotionMapper.mapPromotionListToDtoList(serviceCategoryEntity.get().getPromotionEntities());
 
         // Mapear subcategorías
@@ -108,9 +107,9 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
                 .collect(Collectors.toList());
 
         ResponseCategory responseCategory = ResponseCategory.builder()
-                .serviceCategoryDTO(serviceCategoryDTO)
+                .productCategoryId(serviceCategoryDTO.getCategoryId())
+                .productCategoryName(serviceCategoryDTO.getCategoryName())
                 .responseSubCategoryList(responseSubCategoryList)
-                .serviceDTOList(productDTOList)
                 .promotionDTOList(promotionDTOList)
                 .build();
         log.info("Category with ID {} found", categoryId);
@@ -123,7 +122,7 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
         log.info("Searching for update category with ID: {}", categoryId);
         Optional<ServiceCategoryEntity> serviceCategorySaved = getServiceCategoryEntity(categoryId);
         List<PromotionEntity> promotionEntitySet = promotionRepository.findAllByPromotionIdAndStateTrue(requestCategory.getPromotionListId());
-        serviceCategorySaved.get().setServiceCategoryName(requestCategory.getServiceCategoryName());
+        serviceCategorySaved.get().setServiceCategoryName(requestCategory.getCategoryName());
         serviceCategorySaved.get().setPromotionEntities(promotionEntitySet);
 
         ServiceCategoryEntity serviceCategoryUpdated = serviceCategoryRepository.save(serviceCategorySaved.get());
@@ -173,7 +172,6 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
                     ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity);
 
                     // Convertir las entidades de producto y promoción a DTOs
-                    List<ServiceDTO> serviceDTOList = serviceCategoryEntity.getServiceEntities().stream().map(serviceMapper::mapServiceEntityToDTO).collect(Collectors.toList());
                     List<PromotionDTO> promotionDTOList = promotionMapper.mapPromotionListToDtoList(serviceCategoryEntity.getPromotionEntities());
 
                     // Mapear subcategorías a ResponseSubCategory
@@ -185,8 +183,8 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
 
                     // Crear y retornar el ResponseCategory
                     return ResponseCategory.builder()
-                            .serviceCategoryDTO(serviceCategoryDTO)
-                            .serviceDTOList(serviceDTOList)
+                            .productCategoryId(serviceCategoryDTO.getCategoryId())
+                            .productCategoryName(serviceCategoryDTO.getCategoryName())
                             .responseSubCategoryList(responseSubCategoryList)
                             .promotionDTOList(promotionDTOList)
                             .build();
@@ -202,6 +200,15 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
                 .pageSize(page.getSize())
                 .end(page.isLast())
                 .build();
+    }
+
+    @Override
+    public List<ServiceCategoryDTO> listCategoryOut() {
+        log.info("Searching all categories");
+        return serviceCategoryRepository.findAllByStateTrue()
+                .stream()
+                .map(serviceCategoryMapper::mapServiceEntityToDTO)
+                .collect(Collectors.toList());
     }
 
     private boolean categoryNameExistsByName(String categoryName){

@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @OpenAPIDefinition(
@@ -32,7 +33,7 @@ public class CategoryController {
 
     private final CategoryServiceIn categoryService;
 
-    @GetMapping("/list")
+    @GetMapping("/list/pageable")
     public ResponseEntity<ResponseListPageableCategory> listCategoryPageableList(@RequestParam(value = "pageNo", defaultValue = Constants.NUM_PAG_BY_DEFECT, required = false) int pageNo,
                                                                                  @RequestParam(value = "pageSize", defaultValue = Constants.SIZE_PAG_BY_DEFECT, required = false) int pageSize,
                                                                                  @RequestParam(value = "sortBy", defaultValue = Constants.ORDER_BY_DEFECT_ALL, required = false) String sortBy,
@@ -67,5 +68,8 @@ public class CategoryController {
     public ResponseEntity<ServiceCategoryDTO> updateSubCategory(@PathVariable(name = "categoryId") Long categoryId,@RequestBody RequestSubCategory requestSubCategory){
         return ResponseEntity.ok(categoryService.updateSubCategoryIn(requestSubCategory,categoryId));
     }
-
+    @GetMapping("/list")
+    public ResponseEntity<List<ServiceCategoryDTO>> listCategory(){
+        return ResponseEntity.ok(categoryService.listCategoryIn());
+    }
 }

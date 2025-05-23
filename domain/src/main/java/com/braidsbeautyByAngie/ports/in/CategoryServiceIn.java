@@ -6,6 +6,7 @@ import com.braidsbeautyByAngie.aggregates.request.RequestSubCategory;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseCategory;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseListPageableCategory;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CategoryServiceIn {
@@ -22,4 +23,5 @@ public interface CategoryServiceIn {
     ServiceCategoryDTO deleteCategoryIn(Long categoryId);
 
     ResponseListPageableCategory listCategoryPageableIn(int pageNumber, int pageSize, String orderBy, String sortDir);
+    List<ServiceCategoryDTO>  listCategoryIn();
 }

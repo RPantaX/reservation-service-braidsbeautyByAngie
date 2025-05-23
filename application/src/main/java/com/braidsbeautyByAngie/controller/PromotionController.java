@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @OpenAPIDefinition(
@@ -29,7 +30,7 @@ import java.util.Optional;
 public class PromotionController {
     private final PromotionServiceIn promotionService;
     @Operation(summary = "List all promotions")
-    @GetMapping("/list")
+    @GetMapping("/list/pageable")
     public ResponseEntity<ResponseListPageablePromotion> listPromotionPageableList(@RequestParam(value = "pageNo", defaultValue = Constants.NUM_PAG_BY_DEFECT, required = false) int pageNo,
                                                                                    @RequestParam(value = "pageSize", defaultValue = Constants.SIZE_PAG_BY_DEFECT, required = false) int pageSize,
                                                                                    @RequestParam(value = "sortBy", defaultValue = Constants.ORDER_BY_DEFECT_ALL, required = false) String sortBy,
@@ -55,5 +56,9 @@ public class PromotionController {
     @DeleteMapping("/{promotionId}")
     public ResponseEntity<PromotionDTO> deletePromotion(@PathVariable(name = "promotionId") Long promotionId){
         return ResponseEntity.ok(promotionService.deletePromotionIn(promotionId));
+    }
+    @GetMapping(value = "/list")
+    public ResponseEntity<List<PromotionDTO>> listPromotion(){
+        return ResponseEntity.ok(promotionService.listPromotionIn());
     }
 }

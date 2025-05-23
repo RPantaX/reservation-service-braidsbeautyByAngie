@@ -64,7 +64,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
         List<ServiceCategoryDTO> productCategoryDTOList = serviceCategoryEntityList.stream().map(serviceCategoryMapper::mapServiceEntityToDTO).toList();
         ResponsePromotion responsePromotion = ResponsePromotion.builder()
                 .promotionDTO(promotionMapper.mapPromotionEntityToDto(promotionEntity))
-                .serviceCategoryDTOList(productCategoryDTOList)
+                .categoryDTOList(productCategoryDTOList)
                 .build();
         log.info("Promotion with ID {} found", promotionId);
         return Optional.of(responsePromotion);
@@ -124,7 +124,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
 
             return ResponsePromotion.builder()
                     .promotionDTO(promotionMapper.mapPromotionEntityToDto(promotionEntity))
-                    .serviceCategoryDTOList(serviceCategoryDTOList)
+                    .categoryDTOList(serviceCategoryDTOList)
                     .build();
         }).toList();
 
@@ -139,7 +139,13 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
                 .end(promotionEntityPage.isLast())
                 .build();
     }
+    @Override
+    public List<PromotionDTO> listPromotionOut() {
+        log.info("Fetching all promotions");
 
+        List<PromotionEntity> promotionEntities = promotionRepository.findAllByStateTrue();
+        return promotionEntities.stream().map(promotionMapper::mapPromotionEntityToDto).toList();
+    }
     private boolean promotionExistByName(String promotionName) {
         return promotionRepository.existsByPromotionName(promotionName);
     }

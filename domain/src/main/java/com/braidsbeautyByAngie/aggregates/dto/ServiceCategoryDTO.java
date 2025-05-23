@@ -8,6 +8,6 @@ import lombok.*;
 @Setter
 @Builder
 public class ServiceCategoryDTO {
-    private Long serviceCategoryId;
-    private String serviceCategoryName;
+    private Long categoryId;
+    private String categoryName;
 }

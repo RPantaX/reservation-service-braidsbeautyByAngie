@@ -13,5 +13,5 @@ import java.util.List;
 @Setter
 public class ResponsePromotion {
     private PromotionDTO promotionDTO;
-    private List<ServiceCategoryDTO> serviceCategoryDTOList;
+    private List<ServiceCategoryDTO> categoryDTOList;
 }
