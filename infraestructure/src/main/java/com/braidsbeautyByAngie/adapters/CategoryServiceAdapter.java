@@ -44,7 +44,6 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
 
     private final ServiceCategoryMapper serviceCategoryMapper;
     private final PromotionMapper promotionMapper;
-    private final ServiceMapper serviceMapper;
 
     @Override
     @Transactional
