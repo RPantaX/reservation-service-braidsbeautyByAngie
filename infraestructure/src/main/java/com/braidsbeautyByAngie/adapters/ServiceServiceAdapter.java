@@ -1,5 +1,6 @@
 package com.braidsbeautyByAngie.adapters;
 
+import com.braidsbeautyByAngie.aggregates.constants.ReservationErrorEnum;
 import com.braidsbeautyByAngie.aggregates.dto.PromotionDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceCategoryDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
@@ -22,6 +23,7 @@ import com.braidsbeautyByAngie.repository.ServiceRepository;
 import com.braidsbeautyByAngie.ports.out.ServiceServiceOut;
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ValidateUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
@@ -52,7 +54,7 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     @Override
     public ServiceDTO createServiceOut(RequestService requestService) {
         log.info("Creating service with name: {}", requestService.getServiceName());
-        if(serviceExistsByName(requestService.getServiceName())) throw new RuntimeException("The name of the service already exists");
+        serviceExistsByName(requestService.getServiceName());
         ServiceCategoryEntity serviceCategorySaved = serviceCategoryRepository.findServiceCategoryIdAndStateTrue(requestService.getServiceCategoryId()).orElseThrow();
 
         ServiceEntity serviceEntity = ServiceEntity.builder()
@@ -133,7 +135,8 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     @Override
     public ServiceDTO updateServiceOut(Long serviceId, RequestService requestService) {
         log.info("Searching for update service with ID: {}", serviceId);
-        ServiceEntity serviceEntity = getServiceEntity(serviceId).get();
+        ServiceEntity serviceEntity =  serviceRepository.findServiceByIdWithStateTrue(serviceId).orElse(null);
+        ValidateUtil.requerido(serviceEntity, ReservationErrorEnum.SERVICE_NOT_FOUND_ERS00015, "Service not found with ID: " + serviceId);
         serviceEntity.setServiceName(requestService.getServiceName());
         serviceEntity.setServiceDescription(requestService.getServiceDescription());
         serviceEntity.setServiceImage(requestService.getServiceImage());
@@ -156,8 +159,8 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     @Override
     public ServiceDTO deleteServiceOut(Long serviceId) {
         log.info("Searching service for delete with ID: {}", serviceId);
-
-        ServiceEntity serviceEntitySaved = getServiceEntity(serviceId).orElseThrow();
+        ServiceEntity serviceEntitySaved =  serviceRepository.findServiceByIdWithStateTrue(serviceId).orElse(null);
+        ValidateUtil.requerido(serviceEntitySaved, ReservationErrorEnum.SERVICE_NOT_FOUND_ERS00015, "Service not found with ID: " + serviceId);
         serviceEntitySaved.setModifiedByUser("TEST-DELETED");
         serviceEntitySaved.setDeletedAt(Constants.getTimestamp());
         serviceEntitySaved.setState(Constants.STATUS_INACTIVE);
@@ -287,15 +290,23 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .build();
     }
 
-    private boolean serviceExistsByName(String serviceName){
-        return serviceRepository.existsByServiceName(serviceName);
+    private void serviceExistsByName(String serviceName){
+        boolean serviceExists = serviceRepository.existsByServiceName(serviceName);
+        if (serviceExists){
+            log.error("Service with name '{}' already exists", serviceName);
+            ValidateUtil.evaluar(!serviceExists, ReservationErrorEnum.SERVICE_ALREADY_EXISTS_ERS00016);
+        }
     }
     private boolean serviceExistsById(Long serviceId){
         return serviceRepository.existsByServiceIdAndStateTrue(serviceId);
     }
     private Optional<ServiceEntity> getServiceEntity(Long serviceId){
-        if (!serviceExistsById(serviceId)) throw new RuntimeException("The service does not exist.");
-        return serviceRepository.findServiceByIdWithStateTrue(serviceId);
+        ServiceEntity serviceEntity = serviceRepository.findServiceByIdWithStateTrue(serviceId)
+                .orElse(null);
+        if (serviceEntity == null) {
+            return Optional.empty();
+        }
+        return Optional.of(serviceEntity);
     }
 
 }

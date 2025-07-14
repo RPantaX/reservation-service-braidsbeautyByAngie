@@ -1,5 +1,6 @@
 package com.braidsbeautyByAngie.adapters;
 
+import com.braidsbeautyByAngie.aggregates.constants.ReservationErrorEnum;
 import com.braidsbeautyByAngie.aggregates.dto.WorkServiceDTO;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseListPageableWorkService;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseWorkService;
@@ -12,6 +13,7 @@ import com.braidsbeautyByAngie.ports.out.WorkServiceServiceOut;
 import com.braidsbeautyByAngie.repository.WorkServiceRepository;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ValidateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,7 +69,7 @@ public class WorkServiceAdapter implements WorkServiceServiceOut {
     public WorkServiceDTO cancelWorkServiceOut(Long workServiceId) {
         log.info("Searching work-service for cancel with ID: {}", workServiceId);
 
-        WorkServiceEntity workServiceSaved = getWorkServiceEntity(workServiceId).get();
+        WorkServiceEntity workServiceSaved = getWorkServiceEntity(workServiceId);
         workServiceSaved.setWorkServiceState("CANCELLED");
 
         WorkServiceEntity workServiceCanceled = workServiceRepository.save(workServiceSaved);
@@ -79,8 +81,12 @@ public class WorkServiceAdapter implements WorkServiceServiceOut {
         return workServiceRepository.existsByWorkServiceIdAndStateTrue(workId);
     }
 
-    private Optional<WorkServiceEntity> getWorkServiceEntity(Long workId){
-        if(!workServiceExistsById(workId)) throw new RuntimeException("tHE work service does not exist.");
-        return workServiceRepository.findWorkServiceByIdWithStateTrue(workId);
+    private WorkServiceEntity getWorkServiceEntity(Long workId){
+        WorkServiceEntity workServiceEntity = workServiceRepository.findWorkServiceByIdWithStateTrue(workId).orElse(null);
+        if(workServiceEntity == null) {
+            log.error("Work service with ID {} not found", workId);
+            ValidateUtil.requerido(null, ReservationErrorEnum.WORK_NOT_FOUND_ERS00022);
+        }
+        return workServiceEntity;
     }
 }

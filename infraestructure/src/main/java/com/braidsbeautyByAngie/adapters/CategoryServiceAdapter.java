@@ -19,6 +19,8 @@ import com.braidsbeautyByAngie.repository.ServiceCategoryRepository;
 
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.GlobalErrorEnum;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ValidateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,7 +52,7 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     public ServiceCategoryDTO createCategoryOut(RequestCategory requestCategory) {
 
         log.info("Creating category with name: {}", requestCategory.getCategoryName());
-        if(categoryNameExistsByName(requestCategory.getCategoryName())) throw new RuntimeException("The category name already exists.");
+        validateCategoryName(requestCategory.getCategoryName());
 
         ServiceCategoryEntity serviceCategoryEntity = ServiceCategoryEntity.builder()
                 .serviceCategoryName(requestCategory.getCategoryName())
@@ -71,7 +73,8 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     @Override
     public ServiceCategoryDTO createSubCategoryOut(RequestSubCategory requestSubCategory) {
         log.info("Creating subcategory with name: {}", requestSubCategory.getServiceSubCategoryName());
-        if (categoryNameExistsByName(requestSubCategory.getServiceSubCategoryName()) ) throw new RuntimeException("The name of the category already exists");
+        validateCategoryName(requestSubCategory.getServiceSubCategoryName());
+
         Optional<ServiceCategoryEntity> productCategoryParent = serviceCategoryRepository.findById(requestSubCategory.getServiceCategoryParentId());
         ServiceCategoryEntity serviceCategoryEntity = ServiceCategoryEntity.builder()
                 .parentCategory(productCategoryParent.get())
@@ -89,13 +92,13 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     @Transactional(readOnly = true)
     public Optional<ResponseCategory> findCategoryByIdOut(Long categoryId) {
         log.info("Searching for Category with ID: {}", categoryId);
-        Optional<ServiceCategoryEntity> serviceCategoryEntity = getServiceCategoryEntity(categoryId);
+        ServiceCategoryEntity serviceCategoryEntity = getServiceCategoryEntity(categoryId);
 
-        ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity.get());
-        List<PromotionDTO> promotionDTOList = promotionMapper.mapPromotionListToDtoList(serviceCategoryEntity.get().getPromotionEntities());
+        ServiceCategoryDTO serviceCategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryEntity);
+        List<PromotionDTO> promotionDTOList = promotionMapper.mapPromotionListToDtoList(serviceCategoryEntity.getPromotionEntities());
 
         // Mapear subcategorías
-        List<ResponseSubCategory> responseSubCategoryList = serviceCategoryEntity.get().getSubCategories()
+        List<ResponseSubCategory> responseSubCategoryList = serviceCategoryEntity.getSubCategories()
                 .stream()
                 .map(subCategoryEntity -> {
                     ServiceCategoryDTO subcategoryDTO = serviceCategoryMapper.mapServiceEntityToDTO(subCategoryEntity);
@@ -119,12 +122,12 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     @Transactional
     public ServiceCategoryDTO updateCategoryOut(RequestCategory requestCategory, Long categoryId) {
         log.info("Searching for update category with ID: {}", categoryId);
-        Optional<ServiceCategoryEntity> serviceCategorySaved = getServiceCategoryEntity(categoryId);
+        ServiceCategoryEntity serviceCategorySaved = getServiceCategoryEntity(categoryId);
         List<PromotionEntity> promotionEntitySet = promotionRepository.findAllByPromotionIdAndStateTrue(requestCategory.getPromotionListId());
-        serviceCategorySaved.get().setServiceCategoryName(requestCategory.getCategoryName());
-        serviceCategorySaved.get().setPromotionEntities(promotionEntitySet);
+        serviceCategorySaved.setServiceCategoryName(requestCategory.getCategoryName());
+        serviceCategorySaved.setPromotionEntities(promotionEntitySet);
 
-        ServiceCategoryEntity serviceCategoryUpdated = serviceCategoryRepository.save(serviceCategorySaved.get());
+        ServiceCategoryEntity serviceCategoryUpdated = serviceCategoryRepository.save(serviceCategorySaved);
         log.info("Category updated with ID: {}",serviceCategoryUpdated.getServiceCategoryId());
         return serviceCategoryMapper.mapServiceEntityToDTO(serviceCategoryUpdated);
     }
@@ -132,10 +135,10 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     @Override
     public ServiceCategoryDTO updateSubCategoryOut(RequestSubCategory requestSubCategory, Long categoryId) {
         log.info("Searching for update subcategory with ID: {}", categoryId);
-        Optional<ServiceCategoryEntity> productSubCategory = getServiceCategoryEntity(categoryId);
-        productSubCategory.get().setServiceCategoryName(requestSubCategory.getServiceSubCategoryName());
+        ServiceCategoryEntity productSubCategory = getServiceCategoryEntity(categoryId);
+        productSubCategory.setServiceCategoryName(requestSubCategory.getServiceSubCategoryName());
 
-        ServiceCategoryEntity servicetCategoryUpdated = serviceCategoryRepository.save(productSubCategory.get());
+        ServiceCategoryEntity servicetCategoryUpdated = serviceCategoryRepository.save(productSubCategory);
         log.info("subcategory updated with ID: {}", servicetCategoryUpdated.getServiceCategoryId());
 
         return serviceCategoryMapper.mapServiceEntityToDTO(servicetCategoryUpdated);
@@ -144,12 +147,12 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
     @Override
     public ServiceCategoryDTO deleteCategoryOut(Long categoryId) {
         log.info("Searching category for delete with ID: {}", categoryId);
-        Optional<ServiceCategoryEntity> servicetCategorySaved = getServiceCategoryEntity(categoryId);
-        servicetCategorySaved.get().setState(Constants.STATUS_INACTIVE);
-        servicetCategorySaved.get().setModifiedByUser("PRUEBA");
-        servicetCategorySaved.get().setDeletedAt(Constants.getTimestamp());
+        ServiceCategoryEntity servicetCategorySaved = getServiceCategoryEntity(categoryId);
+        servicetCategorySaved.setState(Constants.STATUS_INACTIVE);
+        servicetCategorySaved.setModifiedByUser("PRUEBA");
+        servicetCategorySaved.setDeletedAt(Constants.getTimestamp());
 
-        ServiceCategoryEntity productCategoryDeleted = serviceCategoryRepository.save(servicetCategorySaved.get());
+        ServiceCategoryEntity productCategoryDeleted = serviceCategoryRepository.save(servicetCategorySaved);
         log.info("Category deleted with ID: {}", categoryId);
         return serviceCategoryMapper.mapServiceEntityToDTO(productCategoryDeleted);
     }
@@ -218,8 +221,20 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
         return serviceCategoryRepository.existByServiceCategoryIdAndStateTrue(id);
     }
 
-    private Optional<ServiceCategoryEntity> getServiceCategoryEntity(Long categoryId){
-        if ( !serviceCategoryExistsById(categoryId) ) throw new RuntimeException("The category or subcategory does not exist.");
-        return  serviceCategoryRepository.findServiceCategoryIdAndStateTrue(categoryId);
+    private ServiceCategoryEntity getServiceCategoryEntity(Long categoryId){
+        ServiceCategoryEntity category = serviceCategoryRepository.findServiceCategoryIdAndStateTrue(categoryId).orElse(null);
+        if(category == null) {
+            log.error("Category with ID {} not found", categoryId);
+            ValidateUtil.requerido(category, GlobalErrorEnum.CATEGORY_NOT_FOUND_ERC00008);
+        }
+        return category;
+    }
+    private void validateCategoryName(String categoryName) {
+        boolean categoryExists = serviceCategoryRepository.existsByServiceCategoryName(categoryName);
+        if(categoryExists){
+            log.error("Category name '{}' already exists", categoryName);
+            ValidateUtil.evaluar(!categoryExists, GlobalErrorEnum.CATEGORY_ALREADY_EXISTS_ERC00009);
+        }
+
     }
 }

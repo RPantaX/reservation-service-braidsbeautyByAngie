@@ -1,5 +1,6 @@
 package com.braidsbeautyByAngie.adapters;
 
+import com.braidsbeautyByAngie.aggregates.constants.ReservationErrorEnum;
 import com.braidsbeautyByAngie.aggregates.dto.ScheduleDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestSchedule;
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseListPageableSchedule;
@@ -10,14 +11,12 @@ import com.braidsbeautyByAngie.entity.ScheduleEntity;
 import com.braidsbeautyByAngie.mapper.ReservationMapper;
 import com.braidsbeautyByAngie.mapper.ScheduleMapper;
 import com.braidsbeautyByAngie.mapper.ServiceMapper;
-import com.braidsbeautyByAngie.mapper.WorkServiceMapper;
 import com.braidsbeautyByAngie.ports.out.ScheduleServiceOut;
 import com.braidsbeautyByAngie.repository.ScheduleRepository;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ValidateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -89,8 +88,10 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
     @Override
     public ScheduleDTO updateScheduleOut(Long scheduleId, RequestSchedule requestSchedule) {
         log.info("Searching for update schedule with ID: {}", scheduleId);
-        ScheduleEntity scheduleSaved = getScheduleEntity(scheduleId).get();
-
+        ScheduleEntity scheduleSaved = scheduleRepository.findScheduleByIdWithStateTrue(scheduleId).orElse(null);
+        if(scheduleSaved == null) {
+            ValidateUtil.requerido(null, ReservationErrorEnum.SCHEDULE_NOT_FOUND_ERS00008, "Schedule not found with ID: " + scheduleId);
+        }
         scheduleSaved.setScheduleDate(requestSchedule.getScheduleDate());
         scheduleSaved.setScheduleHourStart(requestSchedule.getScheduleHourStart());
         scheduleSaved.setScheduleHourEnd(requestSchedule.getScheduleHourEnd());
@@ -105,7 +106,10 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
     @Override
     public ScheduleDTO deleteScheduleOut(Long scheduleId) {
         log.info("Searching schedule for delete with ID: {}", scheduleId);
-        ScheduleEntity scheduleSaved = getScheduleEntity(scheduleId).get();
+        ScheduleEntity scheduleSaved = scheduleRepository.findScheduleByIdWithStateTrue(scheduleId).orElse(null);
+        if(scheduleSaved == null) {
+            ValidateUtil.requerido(null, ReservationErrorEnum.SCHEDULE_NOT_FOUND_ERS00008, "Schedule not found with ID: " + scheduleId);
+        }
         scheduleSaved.setModifiedByUser("TEST-DELETED");
         scheduleSaved.setDeletedAt(Constants.getTimestamp());
         scheduleSaved.setState(Constants.STATUS_INACTIVE);
@@ -164,7 +168,10 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
         return scheduleRepository.existsByScheduleIdAndStateTrue(scheduleId);
     }
     private Optional<ScheduleEntity> getScheduleEntity(Long scheduleId){
-        if (!scheduleExistsById(scheduleId)) throw new RuntimeException("The schedule does not exist.");
-        return scheduleRepository.findScheduleByIdWithStateTrue(scheduleId);
+        ScheduleEntity scheduleEntity = scheduleRepository.findScheduleByIdWithStateTrue(scheduleId).orElse(null);
+        if(scheduleEntity == null) {
+            return Optional.empty();
+        }
+        return Optional.of(scheduleEntity);
     }
 }

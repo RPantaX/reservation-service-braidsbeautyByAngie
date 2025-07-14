@@ -15,6 +15,8 @@ import com.braidsbeautyByAngie.repository.PromotionRepository;
 
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.GlobalErrorEnum;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ValidateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,7 +40,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
     @Override
     public PromotionDTO createPromotionOut(RequestPromotion requestPromotion) {
         log.info("Creating promotion with name: {}", requestPromotion.getPromotionName());
-        if(promotionExistByName(requestPromotion.getPromotionName()))  throw new RuntimeException("The name of the promotion already exists");
+        promotionExistByName(requestPromotion.getPromotionName());
         PromotionEntity promotionEntity = PromotionEntity.builder()
                 .promotionName(requestPromotion.getPromotionName())
                 .promotionDescription(requestPromotion.getPromotionDescription())
@@ -58,7 +60,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
     @Transactional(readOnly = true)
     public Optional<ResponsePromotion> findPromotionByIdOut(Long promotionId) {
         log.info("Searching for promotion with ID: {}", promotionId);
-        PromotionEntity promotionEntity = getPromotionEntity(promotionId).get();
+        PromotionEntity promotionEntity = getPromotionEntity(promotionId);
 
         List<ServiceCategoryEntity> serviceCategoryEntityList = promotionEntity.getProductCategoryEntities().stream().toList();
         List<ServiceCategoryDTO> productCategoryDTOList = serviceCategoryEntityList.stream().map(serviceCategoryMapper::mapServiceEntityToDTO).toList();
@@ -73,7 +75,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
     @Override
     public PromotionDTO updatePromotionOut(Long promotionId, RequestPromotion requestPromotion) {
         log.info("Searching for update promotion with ID: {}", promotionId);
-        PromotionEntity promotionEntity = getPromotionEntity(promotionId).get();
+        PromotionEntity promotionEntity = getPromotionEntity(promotionId);
         promotionEntity.setPromotionName(requestPromotion.getPromotionName());
         promotionEntity.setPromotionDescription(requestPromotion.getPromotionDescription());
         promotionEntity.setPromotionDiscountRate(requestPromotion.getPromotionDiscountRate());
@@ -91,7 +93,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
     public PromotionDTO deletePromotionOut(Long promotionId) {
         log.info("Searching promotion for delete with ID: {}", promotionId);
         List<ServiceCategoryEntity> serviceCategoryEntityList = new ArrayList<>();
-        PromotionEntity promotionEntityOptional = getPromotionEntity(promotionId).get();
+        PromotionEntity promotionEntityOptional = getPromotionEntity(promotionId);
         promotionEntityOptional.setModifiedByUser("TEST");
         promotionEntityOptional.setDeletedAt(Constants.getTimestamp());
         promotionEntityOptional.setProductCategoryEntities(serviceCategoryEntityList);
@@ -146,14 +148,23 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
         List<PromotionEntity> promotionEntities = promotionRepository.findAllByStateTrue();
         return promotionEntities.stream().map(promotionMapper::mapPromotionEntityToDto).toList();
     }
-    private boolean promotionExistByName(String promotionName) {
-        return promotionRepository.existsByPromotionName(promotionName);
+    private void promotionExistByName(String promotionName) {
+        boolean exists = promotionRepository.existsByPromotionName(promotionName);
+        if(exists){
+            log.error("Promotion name '{}' already exists", promotionName);
+            ValidateUtil.evaluar(!exists, GlobalErrorEnum.PROMOTION_ALREADY_EXISTS_ERPN00023);
+        }
     }
     private boolean promotionExistById(Long promotionId) {
         return promotionRepository.existsByPromotionIdAndStateTrue(promotionId);
     }
-    private Optional<PromotionEntity> getPromotionEntity(Long promotionId) {
-        if (!promotionExistById(promotionId)) throw new RuntimeException("The promotion does not exist.");
-        return promotionRepository.findPromotionByIdWithStateTrue(promotionId);
+    private PromotionEntity getPromotionEntity(Long promotionId) {
+        PromotionEntity promotion = promotionRepository.findPromotionByIdWithStateTrue(promotionId)
+                .orElse(null);
+        if(promotion == null) {
+            log.error("Promotion with ID {} not found", promotionId);
+            ValidateUtil.requerido(null, GlobalErrorEnum.PROMOTION_NOT_FOUND_ERPN00022);
+        }
+        return promotion;
     }
 }

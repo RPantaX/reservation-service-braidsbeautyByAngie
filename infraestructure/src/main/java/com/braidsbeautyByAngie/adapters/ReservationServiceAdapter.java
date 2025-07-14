@@ -1,5 +1,6 @@
 package com.braidsbeautyByAngie.adapters;
 
+import com.braidsbeautyByAngie.aggregates.constants.ReservationErrorEnum;
 import com.braidsbeautyByAngie.aggregates.dto.ReservationDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestReservation;
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseListPageableReservation;
@@ -19,9 +20,9 @@ import com.braidsbeautyByAngie.mapper.ServiceMapper;
 import com.braidsbeautyByAngie.repository.*;
 import com.braidsbeautyByAngie.ports.out.ReservationServiceOut;
 
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.AppExceptions.AppExceptionNotFound;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.dto.ReservationCore;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ValidateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,7 +36,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 
@@ -195,8 +195,8 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     public ReservationCore reserveReservationOut(Long shopOrderId, Long reservationId) {
 
         ReservationEntity reservationEntity = reservationRepository.findReservationEntityByReservationIdAndReservationStateIsCreated(reservationId)
-                .orElseThrow(() -> new AppExceptionNotFound("Reservation is in progress or is rejected: " + reservationId));
-
+                .orElse(null);
+        ValidateUtil.requerido(reservationEntity, ReservationErrorEnum.RESERVATION_NOT_FOUND_ERR00001, "Reservation is in progress or is rejected: " + reservationId);
         reservationEntity.setReservationState(ReservationStateEnum.APPROVED);
         reservationEntity.setShopOrderId(shopOrderId);
         reservationRepository.save(reservationEntity);
@@ -209,19 +209,21 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     @Override
     public void cancelReservationOut(Long reservationId) {
         ReservationEntity reservationEntity = reservationRepository.findReservationByReservationIdAndStateTrue(reservationId)
-                .orElseThrow(() -> new AppExceptionNotFound("Reservation does not exist or is inactive: " + reservationId));
+                .orElse(null);
+        ValidateUtil.requerido(reservationEntity, ReservationErrorEnum.RESERVATION_NOT_FOUND_ERR00001, "Reservation does not exist or is inactive: " + reservationId);
         reservationEntity.setReservationState(ReservationStateEnum.CREATED);
         reservationRepository.save(reservationEntity);
     }
     private WorkServiceEntity createWorkServiceEntity(RequestReservation request, ReservationEntity reservationEntity) {
         ScheduleEntity scheduleEntity = scheduleRepository
                 .findScheduleByIdWithStateTrueAndScheduleStateLIBRE(request.getScheduleId())
-                .orElseThrow(() -> new EntityNotFoundException("Schedule not found for ID or Schedule Not Free: " + request.getScheduleId()));
+                .orElse(null);
+        ValidateUtil.requerido(scheduleEntity, ReservationErrorEnum.SCHEDULE_NOT_FOUND_ERS00008,"Schedule not found for ID or Schedule Not Free: " + request.getScheduleId());
         scheduleEntity.setScheduleState(ScheduleStateEnum.RESERVED);
         ServiceEntity serviceEntity = serviceRepository
                 .findServiceByIdWithStateTrue(request.getServiceId())
-                .orElseThrow(() -> new EntityNotFoundException("Service not found for ID: " + request.getServiceId()));
-
+                .orElse(null);
+        ValidateUtil.requerido(serviceEntity, ReservationErrorEnum.SERVICE_NOT_FOUND_ERS00015,"Service not found for ID: " + request.getServiceId());
         return WorkServiceEntity.builder()
                 .scheduleEntity(scheduleEntity)
                 .workServiceState(STATUS_CREATED)
@@ -237,12 +239,13 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
         return reservationRepository.existsReservationIdAndStateTrue(reservationId);
     }
     private ReservationEntity getReservationEntity(Long reservationId) {
-        if (!reservationExistsById(reservationId)) {
+        ReservationEntity reservationEntity = reservationRepository.findReservationByReservationIdAndStateTrue(reservationId).orElse(null);
+
+        if (reservationEntity == null) {
             log.warn("Reservation with ID: {} does not exist or is inactive.", reservationId);
-            throw new AppExceptionNotFound("The reservation does not exist or is inactive.");
+            ValidateUtil.requerido(null, ReservationErrorEnum.RESERVATION_NOT_FOUND_ERR00001, "The reservation does not exist or is inactive: " + reservationId);
         }
-        return reservationRepository.findReservationByReservationIdAndStateTrue(reservationId).orElseThrow(
-                ()-> new AppExceptionNotFound("The reservation does not exist or is inactive."));
+        return reservationEntity;
     }
     private BigDecimal calculateTotalReservation(List<WorkServiceEntity> workServiceEntities) {
         return workServiceEntities.stream()
