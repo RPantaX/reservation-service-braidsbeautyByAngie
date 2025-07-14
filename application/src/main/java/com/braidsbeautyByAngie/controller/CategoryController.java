@@ -9,6 +9,7 @@ import com.braidsbeautyByAngie.ports.in.CategoryServiceIn;
 
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import lombok.RequiredArgsConstructor;
@@ -34,42 +35,43 @@ public class CategoryController {
     private final CategoryServiceIn categoryService;
 
     @GetMapping("/list/pageable")
-    public ResponseEntity<ResponseListPageableCategory> listCategoryPageableList(@RequestParam(value = "pageNo", defaultValue = Constants.NUM_PAG_BY_DEFECT, required = false) int pageNo,
-                                                                                 @RequestParam(value = "pageSize", defaultValue = Constants.SIZE_PAG_BY_DEFECT, required = false) int pageSize,
-                                                                                 @RequestParam(value = "sortBy", defaultValue = Constants.ORDER_BY_DEFECT_ALL, required = false) String sortBy,
-                                                                                 @RequestParam(value = "sortDir", defaultValue = Constants.ORDER_DIRECT_BY_DEFECT, required = false) String sortDir){
-        return ResponseEntity.ok(categoryService.listCategoryPageableIn(pageNo, pageSize, sortBy, sortDir));
+    public ResponseEntity<ApiResponse> listCategoryPageableList(@RequestParam(value = "pageNo", defaultValue = Constants.NUM_PAG_BY_DEFECT, required = false) int pageNo,
+                                                                @RequestParam(value = "pageSize", defaultValue = Constants.SIZE_PAG_BY_DEFECT, required = false) int pageSize,
+                                                                @RequestParam(value = "sortBy", defaultValue = Constants.ORDER_BY_DEFECT_ALL, required = false) String sortBy,
+                                                                @RequestParam(value = "sortDir", defaultValue = Constants.ORDER_DIRECT_BY_DEFECT, required = false) String sortDir){
+        return ResponseEntity.ok(ApiResponse.ok("List of categories retrieved successfully",categoryService.listCategoryPageableIn(pageNo, pageSize, sortBy, sortDir)));
     }
 
     @GetMapping(value = "/{categoryId}")
-    public ResponseEntity<Optional<ResponseCategory>> listCategoryById(@PathVariable(name = "categoryId") Long categoryId){
-        return ResponseEntity.ok(categoryService.findCategoryByIdIn(categoryId));
+    public ResponseEntity<ApiResponse> listCategoryById(@PathVariable(name = "categoryId") Long categoryId){
+        return ResponseEntity.ok(ApiResponse.ok("LIST CATEGORY BY ID",categoryService.findCategoryByIdIn(categoryId)));
     }
 
     @PostMapping()
-    public ResponseEntity<ServiceCategoryDTO> saveCategory(@RequestBody RequestCategory requestCategory){
-        return new ResponseEntity<>(categoryService.createCategoryIn(requestCategory), HttpStatus.CREATED);
+    public ResponseEntity<ApiResponse> saveCategory(@RequestBody RequestCategory requestCategory){
+        return new ResponseEntity<>(ApiResponse.create("Category saved",categoryService.createCategoryIn(requestCategory)), HttpStatus.CREATED);
     }
     @PutMapping("/{categoryId}")
-    public ResponseEntity<ServiceCategoryDTO> updateCategory(@PathVariable(name = "categoryId") Long categoryId,@RequestBody RequestCategory requestCategory){
-        return ResponseEntity.ok(categoryService.updateCategoryIn(requestCategory,categoryId));
+    public ResponseEntity<ApiResponse> updateCategory(@PathVariable(name = "categoryId") Long categoryId,@RequestBody RequestCategory requestCategory){
+        return new ResponseEntity<>(ApiResponse.create("category saved", categoryService.updateCategoryIn(requestCategory,categoryId)), HttpStatus.CREATED);
     }
     @DeleteMapping("/{categoryId}")
-    public ResponseEntity<ServiceCategoryDTO> deleteCategory(@PathVariable(name = "categoryId") Long categoryId){
-        return ResponseEntity.ok(categoryService.deleteCategoryIn(categoryId));
+    public ResponseEntity<ApiResponse> deleteCategory(@PathVariable(name = "categoryId") Long categoryId){
+        return ResponseEntity.ok(ApiResponse.ok("Category deleted",categoryService.deleteCategoryIn(categoryId)));
     }
     //subcategories
     @PostMapping("/subcategory")
-    public ResponseEntity<ServiceCategoryDTO> saveSubCategory(@RequestBody RequestSubCategory requestSubCategory){
-        return new ResponseEntity<>(categoryService.createSubCategoryIn(requestSubCategory), HttpStatus.CREATED);
+    public ResponseEntity<ApiResponse> saveSubCategory(@RequestBody RequestSubCategory requestSubCategory){
+        return new ResponseEntity<>(ApiResponse.create("SubCategory saved", categoryService.createSubCategoryIn(requestSubCategory)), HttpStatus.CREATED);
     }
 
     @PutMapping("/subcategory/{categoryId}")
-    public ResponseEntity<ServiceCategoryDTO> updateSubCategory(@PathVariable(name = "categoryId") Long categoryId,@RequestBody RequestSubCategory requestSubCategory){
-        return ResponseEntity.ok(categoryService.updateSubCategoryIn(requestSubCategory,categoryId));
+    public ResponseEntity<ApiResponse> updateSubCategory(@PathVariable(name = "categoryId") Long categoryId,@RequestBody RequestSubCategory requestSubCategory){
+        return ResponseEntity.ok(ApiResponse.create("sub categpry updated",categoryService.updateSubCategoryIn(requestSubCategory,categoryId)));
     }
     @GetMapping("/list")
-    public ResponseEntity<List<ServiceCategoryDTO>> listCategory(){
-        return ResponseEntity.ok(categoryService.listCategoryIn());
+    public ResponseEntity<ApiResponse> listCategory(){
+        return ResponseEntity.ok(ApiResponse.ok("List of categories retrieved successfully",
+                categoryService.listCategoryIn()));
     }
 }
