@@ -6,6 +6,7 @@ import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseListPageabl
 import com.braidsbeautyByAngie.aggregates.response.schedules.ResponseSchedule;
 import com.braidsbeautyByAngie.ports.in.ScheduleServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,18 +47,21 @@ public class ScheduleController {
     }
 
     @Operation(summary = "Save schedule")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PostMapping()
     public ResponseEntity<ApiResponse> saveSchedule(@RequestBody RequestSchedule requestSchedule){
         return new ResponseEntity<>(ApiResponse.create("Save schedule", scheduleServiceIn.createScheduleIn(requestSchedule)), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Update schedule")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PutMapping("/{scheduleId}")
     public ResponseEntity<ApiResponse> updateSchedule(@PathVariable(name = "scheduleId") Long scheduleId,@RequestBody RequestSchedule requestSchedule){
         return new ResponseEntity<>(ApiResponse.create("Update schedule", scheduleServiceIn.updateScheduleIn(scheduleId, requestSchedule)), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Delete schedule")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<ApiResponse> deleteSchedule(@PathVariable(name = "scheduleId") Long scheduleId){
         return ResponseEntity.ok(ApiResponse.ok("Delete schedule",scheduleServiceIn.deleteScheduleIn(scheduleId)));

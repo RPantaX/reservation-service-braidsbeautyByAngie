@@ -7,6 +7,7 @@ import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservat
 import com.braidsbeautyByAngie.aggregates.response.reservations.ResponseReservationDetail;
 import com.braidsbeautyByAngie.ports.in.ReservationServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,12 +50,14 @@ public class ReservationController {
     }
 
     @Operation(summary = "Save reservation")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PostMapping()
     public ResponseEntity<ApiResponse> saveReservation(@RequestBody List<RequestReservation> requestReservationList){
         return new ResponseEntity<>(ApiResponse.create("Save reservation", reservationService.createReservationIn(requestReservationList)), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Cancel reservation")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @DeleteMapping("/{reservationId}")
     public ResponseEntity<ApiResponse> cancelReservation(@PathVariable(name = "reservationId") Long reservationId){
         return ResponseEntity.ok(ApiResponse.ok("Cancel reservation", reservationService.deleteReservationIn(reservationId)));

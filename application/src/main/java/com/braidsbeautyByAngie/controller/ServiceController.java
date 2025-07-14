@@ -6,6 +6,7 @@ import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageable
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
 import com.braidsbeautyByAngie.ports.in.ServiceServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,17 +46,19 @@ public class ServiceController {
         return ResponseEntity.ok(ApiResponse.ok("List service by id",serviceService.findServiceByIdIn(serviceId)));
     }
     @Operation(summary = "Save service")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PostMapping()
     public ResponseEntity<ApiResponse> saveService(@RequestBody RequestService requestService){
         return new ResponseEntity<>(ApiResponse.create( "service saved",serviceService.createServiceIn(requestService)), HttpStatus.CREATED);
     }
-
     @Operation(summary = "Update service")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PutMapping("/{serviceId}")
     public ResponseEntity<ApiResponse> updateService(@PathVariable(name = "serviceId") Long serviceId,@RequestBody RequestService requestService){
         return new ResponseEntity<>(ApiResponse.create("Updated service" , serviceService.updateServiceIn(serviceId, requestService)), HttpStatus.CREATED);
     }
     @Operation(summary = "Delete service")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_SUPER_ADMIN"}, requireAll = true) // Admin Y Super Admin
     @DeleteMapping("/{serviceId}")
     public ResponseEntity<ApiResponse> deleteService(@PathVariable(name = "serviceId") Long serviceId){
         return ResponseEntity.ok(ApiResponse.ok("Delete service", serviceService.deleteServiceIn(serviceId)));

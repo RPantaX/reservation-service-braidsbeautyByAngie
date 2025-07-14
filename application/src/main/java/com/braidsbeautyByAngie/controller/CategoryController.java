@@ -9,6 +9,7 @@ import com.braidsbeautyByAngie.ports.in.CategoryServiceIn;
 
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -46,25 +47,28 @@ public class CategoryController {
     public ResponseEntity<ApiResponse> listCategoryById(@PathVariable(name = "categoryId") Long categoryId){
         return ResponseEntity.ok(ApiResponse.ok("LIST CATEGORY BY ID",categoryService.findCategoryByIdIn(categoryId)));
     }
-
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PostMapping()
     public ResponseEntity<ApiResponse> saveCategory(@RequestBody RequestCategory requestCategory){
         return new ResponseEntity<>(ApiResponse.create("Category saved",categoryService.createCategoryIn(requestCategory)), HttpStatus.CREATED);
     }
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PutMapping("/{categoryId}")
     public ResponseEntity<ApiResponse> updateCategory(@PathVariable(name = "categoryId") Long categoryId,@RequestBody RequestCategory requestCategory){
         return new ResponseEntity<>(ApiResponse.create("category saved", categoryService.updateCategoryIn(requestCategory,categoryId)), HttpStatus.CREATED);
     }
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<ApiResponse> deleteCategory(@PathVariable(name = "categoryId") Long categoryId){
         return ResponseEntity.ok(ApiResponse.ok("Category deleted",categoryService.deleteCategoryIn(categoryId)));
     }
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     //subcategories
     @PostMapping("/subcategory")
     public ResponseEntity<ApiResponse> saveSubCategory(@RequestBody RequestSubCategory requestSubCategory){
         return new ResponseEntity<>(ApiResponse.create("SubCategory saved", categoryService.createSubCategoryIn(requestSubCategory)), HttpStatus.CREATED);
     }
-
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PutMapping("/subcategory/{categoryId}")
     public ResponseEntity<ApiResponse> updateSubCategory(@PathVariable(name = "categoryId") Long categoryId,@RequestBody RequestSubCategory requestSubCategory){
         return ResponseEntity.ok(ApiResponse.create("sub categpry updated",categoryService.updateSubCategoryIn(requestSubCategory,categoryId)));

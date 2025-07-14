@@ -3,6 +3,7 @@ package com.braidsbeautyByAngie.controller;
 import com.braidsbeautyByAngie.aggregates.request.RequestPromotion;
 import com.braidsbeautyByAngie.ports.in.PromotionServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,6 +45,7 @@ public class PromotionController {
     }
 
     @Operation(summary = "Save promotion")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PostMapping()
     public ResponseEntity<ApiResponse> savePromotion(@RequestBody RequestPromotion requestPromotion) {
         return new ResponseEntity<>(ApiResponse.create("Promotion saved",
@@ -51,6 +53,7 @@ public class PromotionController {
     }
 
     @Operation(summary = "Update promotion")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PutMapping("/{promotionId}")
     public ResponseEntity<ApiResponse> updatePromotion(@PathVariable(name = "promotionId") Long promotionId,
                                                        @RequestBody RequestPromotion requestPromotion) {
@@ -59,6 +62,7 @@ public class PromotionController {
     }
 
     @Operation(summary = "Delete promotion")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @DeleteMapping("/{promotionId}")
     public ResponseEntity<ApiResponse> deletePromotion(@PathVariable(name = "promotionId") Long promotionId) {
         return ResponseEntity.ok(ApiResponse.ok("Promotion deleted",

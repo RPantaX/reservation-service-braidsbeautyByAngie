@@ -4,6 +4,7 @@ import com.braidsbeautyByAngie.aggregates.dto.WorkServiceDTO;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseListPageableWorkService;
 import com.braidsbeautyByAngie.ports.in.WorkServiceServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
+import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,7 @@ public class WorkServiceController {
         return ResponseEntity.ok(ApiResponse.ok("list work service", workServiceService.listWorkServiceByPageIn(pageNo, pageSize, sortBy, sortDir)));
     }
     @Operation(summary = "Cancel workservice")
+    @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @DeleteMapping("/{workServiceId}")
     public ResponseEntity<ApiResponse> cancelWorkService(@PathVariable(name = "workServiceId") Long workServiceId){
         return ResponseEntity.ok(ApiResponse.ok("cancel work service",workServiceService.cancelWorkServiceIn(workServiceId)));
