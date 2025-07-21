@@ -12,6 +12,7 @@ import java.util.Optional;
 
 public interface ScheduleServiceIn {
     ScheduleDTO createScheduleIn(RequestSchedule requestSchedule);
+    List<ScheduleDTO> createSchedulesBulkIn(List<RequestSchedule> requestSchedules);
     Optional<ResponseSchedule> findScheduleByIdIn(Long scheduleId);
     ScheduleDTO updateScheduleIn(Long scheduleId, RequestSchedule requestSchedule);
     ScheduleDTO deleteScheduleIn(Long scheduleId);

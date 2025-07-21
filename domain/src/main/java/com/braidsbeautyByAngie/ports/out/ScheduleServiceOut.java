@@ -12,6 +12,7 @@ import java.util.Optional;
 
 public interface ScheduleServiceOut {
     ScheduleDTO createScheduleOut(RequestSchedule requestSchedule);
+    List<ScheduleDTO> createSchedulesBulkOut(List<RequestSchedule> requestSchedules);
     Optional<ResponseSchedule> findScheduleByIdOut(Long scheduleId);
     ScheduleDTO updateScheduleOut(Long scheduleId, RequestSchedule requestSchedule);
     ScheduleDTO deleteScheduleOut(Long scheduleId);

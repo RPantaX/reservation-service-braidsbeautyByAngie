@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @OpenAPIDefinition(
@@ -88,7 +89,11 @@ public class ScheduleController {
     public ResponseEntity<ApiResponse> saveSchedule(@RequestBody RequestSchedule requestSchedule){
         return new ResponseEntity<>(ApiResponse.create("Save schedule", scheduleServiceIn.createScheduleIn(requestSchedule)), HttpStatus.CREATED);
     }
-
+    @PostMapping("/bulk")
+    public ResponseEntity<ApiResponse> createSchedulesBulk(@RequestBody List<RequestSchedule> requestSchedules) {
+        List<ScheduleDTO> createdSchedules = scheduleServiceIn.createSchedulesBulkIn(requestSchedules);
+        return new ResponseEntity<>(ApiResponse.create("Save schedules", createdSchedules), HttpStatus.CREATED);
+    }
     @Operation(summary = "Update schedule")
     @RequireRole(value = {"ROLE_ADMIN", "ROLE_MANAGER"}) // Admin O Manager
     @PutMapping("/{scheduleId}")

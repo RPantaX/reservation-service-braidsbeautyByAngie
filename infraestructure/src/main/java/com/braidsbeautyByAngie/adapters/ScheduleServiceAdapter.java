@@ -63,7 +63,38 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
         log.info("Schedule '{}' created successfully with ID: {}",scheduleSaved.getScheduleDate(),scheduleSaved.getScheduleId());
         return scheduleMapper.mapScheduleEntityToDTO(scheduleSaved);
     }
+    @Override
+    @Transactional // Asegura que toda la operación sea atómica
+    public List<ScheduleDTO> createSchedulesBulkOut(List<RequestSchedule> requestSchedules) {
+        log.info("Creating {} schedules in bulk.", requestSchedules.size());
 
+        // 1. Mapear la lista de DTOs a una lista de Entidades
+        List<ScheduleEntity> scheduleEntities = requestSchedules.stream()
+                .map(request -> {
+                    // Reutilizamos la lógica de construcción de la entidad
+                    return ScheduleEntity.builder()
+                            .scheduleDate(request.getScheduleDate())
+                            .scheduleHourStart(request.getScheduleHourStart())
+                            .scheduleHourEnd(request.getScheduleHourEnd())
+                            .employeeId(request.getEmployeeId()) // Asegúrate que el employeeId venga en el request
+                            .scheduleState(ScheduleStateEnum.FREE)
+                            .createdAt(Constants.getTimestamp())
+                            .state(Constants.STATUS_ACTIVE)
+                            .modifiedByUser("Test") // O el usuario autenticado
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // 2. Guardar todas las entidades en una sola operación optimizada
+        List<ScheduleEntity> savedEntities = scheduleRepository.saveAll(scheduleEntities);
+
+        log.info("{} schedules created successfully in bulk.", savedEntities.size());
+
+        // 3. Mapear las entidades guardadas de vuelta a DTOs para la respuesta
+        return savedEntities.stream()
+                .map(scheduleMapper::mapScheduleEntityToDTO)
+                .collect(Collectors.toList());
+    }
     @Override
     @Transactional(readOnly = true)
     public Optional<ResponseSchedule> findScheduleByIdOut(Long scheduleId) {

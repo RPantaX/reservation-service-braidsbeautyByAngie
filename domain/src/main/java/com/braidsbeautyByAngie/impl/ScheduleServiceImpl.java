@@ -26,6 +26,11 @@ public class ScheduleServiceImpl implements ScheduleServiceIn {
     }
 
     @Override
+    public List<ScheduleDTO> createSchedulesBulkIn(List<RequestSchedule> requestSchedules) {
+        return scheduleServiceOut.createSchedulesBulkOut(requestSchedules);
+    }
+
+    @Override
     public Optional<ResponseSchedule> findScheduleByIdIn(Long scheduleId) {
         return scheduleServiceOut.findScheduleByIdOut(scheduleId);
     }
