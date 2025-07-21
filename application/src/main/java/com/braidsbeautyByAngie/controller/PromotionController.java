@@ -1,9 +1,9 @@
 package com.braidsbeautyByAngie.controller;
 
 import com.braidsbeautyByAngie.aggregates.request.RequestPromotion;
+import com.braidsbeautyByAngie.auth.RequireRole;
 import com.braidsbeautyByAngie.ports.in.PromotionServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;

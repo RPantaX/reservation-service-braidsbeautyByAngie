@@ -16,4 +16,5 @@ public class RequestSchedule {
     private LocalDate scheduleDate;
     private LocalTime scheduleHourStart;
     private LocalTime scheduleHourEnd;
+    private Long employeeId;
 }

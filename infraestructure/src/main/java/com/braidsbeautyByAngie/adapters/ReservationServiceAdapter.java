@@ -53,7 +53,6 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
     private final ScheduleMapper scheduleMapper;
     private final ServiceMapper serviceMapper;
 
-    private static final String USER_CREATED = "USER-CREATED";
     private static final String STATUS_CREATED = "CREATED";
     private final PromotionRepository promotionRepository;
 
@@ -69,7 +68,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
             ReservationEntity reservationEntity = ReservationEntity.builder()
                     .reservationState(ReservationStateEnum.CREATED)
                     .createdAt(Constants.getTimestamp())
-                    .modifiedByUser(USER_CREATED)
+                    .modifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession())
                     .state(Constants.STATUS_ACTIVE)
                     .build();
 
@@ -127,7 +126,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
         reservationEntity.setReservationState(ReservationStateEnum.REJECTED);
         reservationEntity.setState(Constants.STATUS_INACTIVE);
         reservationEntity.setDeletedAt(Constants.getTimestamp());
-        reservationEntity.setModifiedByUser("USER-MODIFIED");
+        reservationEntity.setModifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession());
 
         ReservationEntity deletedReservation = reservationRepository.save(reservationEntity);
 
@@ -230,7 +229,7 @@ public class ReservationServiceAdapter implements ReservationServiceOut {
                 .serviceEntity(serviceEntity)
                 .createdAt(Constants.getTimestamp())
                 .state(Constants.STATUS_ACTIVE)
-                .modifiedByUser(USER_CREATED)
+                .modifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession())
                 .reservationEntity(reservationEntity)
                 .build();
     }

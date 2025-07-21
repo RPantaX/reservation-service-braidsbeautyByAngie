@@ -48,7 +48,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
                 .promotionStartDate(requestPromotion.getPromotionStartDate())
                 .promotionEndDate(requestPromotion.getPromotionEndDate())
                 .createdAt(Constants.getTimestamp())
-                .modifiedByUser("TEST")
+                .modifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession())
                 .state(Constants.STATUS_ACTIVE)
                 .build();
         PromotionEntity promotionSaved = promotionRepository.save(promotionEntity);
@@ -81,7 +81,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
         promotionEntity.setPromotionDiscountRate(requestPromotion.getPromotionDiscountRate());
         promotionEntity.setPromotionStartDate(requestPromotion.getPromotionStartDate());
         promotionEntity.setPromotionEndDate(requestPromotion.getPromotionEndDate());
-        promotionEntity.setModifiedByUser("TEST");
+        promotionEntity.setModifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession());
         promotionEntity.setModifiedAt(Constants.getTimestamp());
 
         PromotionEntity promotionEntityUpdated = promotionRepository.save(promotionEntity);
@@ -94,7 +94,7 @@ public class PromotionServiceAdapter implements PromotionServiceOut {
         log.info("Searching promotion for delete with ID: {}", promotionId);
         List<ServiceCategoryEntity> serviceCategoryEntityList = new ArrayList<>();
         PromotionEntity promotionEntityOptional = getPromotionEntity(promotionId);
-        promotionEntityOptional.setModifiedByUser("TEST");
+        promotionEntityOptional.setModifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession());
         promotionEntityOptional.setDeletedAt(Constants.getTimestamp());
         promotionEntityOptional.setProductCategoryEntities(serviceCategoryEntityList);
         promotionEntityOptional.setState(Constants.STATUS_INACTIVE);

@@ -66,7 +66,7 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .serviceCategoryEntity(serviceCategorySaved)
                 .durationTimeAprox(requestService.getDurationTimeAprox())
                 .createdAt(Constants.getTimestamp())
-                .modifiedByUser("TEST-CREATED")
+                .modifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession())
                 .state(Constants.STATUS_ACTIVE)
                 .build();
         ServiceEntity serviceCreated = serviceRepository.save(serviceEntity);
@@ -141,7 +141,7 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
         serviceEntity.setServiceDescription(requestService.getServiceDescription());
         serviceEntity.setServiceImage(requestService.getServiceImage());
         serviceEntity.setDurationTimeAprox(requestService.getDurationTimeAprox());
-        serviceEntity.setModifiedByUser("TEST-UPDATED");
+        serviceEntity.setModifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession());
         serviceEntity.setModifiedAt(Constants.getTimestamp());
 
         //check if the category exists
@@ -161,7 +161,7 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
         log.info("Searching service for delete with ID: {}", serviceId);
         ServiceEntity serviceEntitySaved =  serviceRepository.findServiceByIdWithStateTrue(serviceId).orElse(null);
         ValidateUtil.requerido(serviceEntitySaved, ReservationErrorEnum.SERVICE_NOT_FOUND_ERS00015, "Service not found with ID: " + serviceId);
-        serviceEntitySaved.setModifiedByUser("TEST-DELETED");
+        serviceEntitySaved.setModifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession());
         serviceEntitySaved.setDeletedAt(Constants.getTimestamp());
         serviceEntitySaved.setState(Constants.STATUS_INACTIVE);
         serviceEntitySaved.setServiceCategoryEntity(null);

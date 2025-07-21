@@ -57,7 +57,7 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
         ServiceCategoryEntity serviceCategoryEntity = ServiceCategoryEntity.builder()
                 .serviceCategoryName(requestCategory.getCategoryName())
                 .state(Constants.STATUS_ACTIVE)
-                .modifiedByUser("Test")
+                .modifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession())
                 .createdAt(Constants.getTimestamp())
                 .build();
         if(!requestCategory.getPromotionListId().isEmpty()){
@@ -81,7 +81,7 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
                 .serviceCategoryName(requestSubCategory.getServiceSubCategoryName())
                 .createdAt(Constants.getTimestamp())
                 .state(Constants.STATUS_ACTIVE)
-                .modifiedByUser("prueba")
+                .modifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession())
                 .build();
         ServiceCategoryEntity serviceCategorySaved = serviceCategoryRepository.save(serviceCategoryEntity);
         log.info("SubCategory '{}' created successfully with ID: {}",serviceCategorySaved.getServiceCategoryName(),serviceCategorySaved.getServiceCategoryId());
@@ -149,7 +149,7 @@ public class CategoryServiceAdapter implements CategoryServiceOut {
         log.info("Searching category for delete with ID: {}", categoryId);
         ServiceCategoryEntity servicetCategorySaved = getServiceCategoryEntity(categoryId);
         servicetCategorySaved.setState(Constants.STATUS_INACTIVE);
-        servicetCategorySaved.setModifiedByUser("PRUEBA");
+        servicetCategorySaved.setModifiedByUser(com.braidsbeautyByAngie.aggregates.constants.Constants.getUserInSession());
         servicetCategorySaved.setDeletedAt(Constants.getTimestamp());
 
         ServiceCategoryEntity productCategoryDeleted = serviceCategoryRepository.save(servicetCategorySaved);

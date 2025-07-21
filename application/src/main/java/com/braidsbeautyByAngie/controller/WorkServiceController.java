@@ -2,9 +2,9 @@ package com.braidsbeautyByAngie.controller;
 
 import com.braidsbeautyByAngie.aggregates.dto.WorkServiceDTO;
 import com.braidsbeautyByAngie.aggregates.response.workService.ResponseListPageableWorkService;
+import com.braidsbeautyByAngie.auth.RequireRole;
 import com.braidsbeautyByAngie.ports.in.WorkServiceServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;

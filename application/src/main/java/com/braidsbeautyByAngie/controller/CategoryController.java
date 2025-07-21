@@ -5,11 +5,11 @@ import com.braidsbeautyByAngie.aggregates.request.RequestCategory;
 import com.braidsbeautyByAngie.aggregates.request.RequestSubCategory;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseCategory;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseListPageableCategory;
+import com.braidsbeautyByAngie.auth.RequireRole;
 import com.braidsbeautyByAngie.ports.in.CategoryServiceIn;
 
 
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
-import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.auth.RequireRole;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ApiResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
