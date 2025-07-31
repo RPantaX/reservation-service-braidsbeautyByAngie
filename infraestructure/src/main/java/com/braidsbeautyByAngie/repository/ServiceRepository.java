@@ -1,6 +1,7 @@
 package com.braidsbeautyByAngie.repository;
 
 import com.braidsbeautyByAngie.entity.ServiceEntity;
+import com.braidsbeautyByAngie.repository.dao.ServiceRepositoryCustom;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
+public interface ServiceRepository extends JpaRepository<ServiceEntity, Long>, ServiceRepositoryCustom {
 
     boolean existsByServiceName(String serviceName);
 

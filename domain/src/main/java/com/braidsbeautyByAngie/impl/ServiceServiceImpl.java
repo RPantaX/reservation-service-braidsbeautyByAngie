@@ -2,6 +2,7 @@ package com.braidsbeautyByAngie.impl;
 
 import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestService;
+import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
 import com.braidsbeautyByAngie.ports.in.ServiceServiceIn;
@@ -45,5 +46,10 @@ public class ServiceServiceImpl implements ServiceServiceIn {
     @Override
     public ResponseListPageableService listServiceByPageByCategoryIn(int pageNumber, int pageSize, String orderBy, String sortDir, Long categoryId) {
         return serviceServiceOut.listServiceByPageByCategoryOut(pageNumber, pageSize, orderBy, sortDir, categoryId);
+    }
+
+    @Override
+    public ResponseListPageableService filterServicesIn(RequestServiceFilter filter) {
+        return serviceServiceOut.filterServicesOut(filter);
     }
 }

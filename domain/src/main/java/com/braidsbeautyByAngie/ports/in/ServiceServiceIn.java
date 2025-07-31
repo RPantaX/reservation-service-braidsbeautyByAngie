@@ -2,6 +2,7 @@ package com.braidsbeautyByAngie.ports.in;
 
 import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestService;
+import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
 
@@ -14,4 +15,5 @@ public interface ServiceServiceIn {
     ServiceDTO deleteServiceIn(Long serviceId);
     ResponseListPageableService listServiceByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir);
     ResponseListPageableService listServiceByPageByCategoryIn(int pageNumber, int pageSize, String orderBy, String sortDir, Long categoryId);
+    ResponseListPageableService filterServicesIn(RequestServiceFilter filter);
 }

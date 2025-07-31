@@ -5,6 +5,7 @@ import com.braidsbeautyByAngie.aggregates.dto.PromotionDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceCategoryDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestService;
+import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseCategoryWIthoutServices;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseSubCategory;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
@@ -290,6 +291,62 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
                 .build();
     }
 
+    @Override
+    public ResponseListPageableService filterServicesOut(RequestServiceFilter filter) {
+        log.info("Processing service filter request in application service");
+
+        // Validaciones de negocio
+        validateServiceFilterRequest(filter);
+
+        return serviceRepository.filterServices(filter);
+    }
+    private void validateServiceFilterRequest(RequestServiceFilter filter) {
+        // Validar rangos de precio
+        if (filter.getMinPrice() != null && filter.getMaxPrice() != null) {
+            if (filter.getMinPrice().compareTo(filter.getMaxPrice()) > 0) {
+                throw new IllegalArgumentException("El precio mínimo no puede ser mayor al precio máximo");
+            }
+        }
+
+        // Validar rangos de descuento
+        if (filter.getMinDiscountRate() != null && filter.getMaxDiscountRate() != null) {
+            if (filter.getMinDiscountRate().compareTo(filter.getMaxDiscountRate()) > 0) {
+                throw new IllegalArgumentException("La tasa de descuento mínima no puede ser mayor a la máxima");
+            }
+        }
+
+        // Validar duración en minutos
+        if (filter.getMinDurationMinutes() != null && filter.getMaxDurationMinutes() != null) {
+            if (filter.getMinDurationMinutes() > filter.getMaxDurationMinutes()) {
+                throw new IllegalArgumentException("La duración mínima no puede ser mayor a la máxima");
+            }
+        }
+
+        // Validar duración LocalTime
+        if (filter.getMinDuration() != null && filter.getMaxDuration() != null) {
+            if (filter.getMinDuration().isAfter(filter.getMaxDuration())) {
+                throw new IllegalArgumentException("La duración mínima no puede ser mayor a la máxima");
+            }
+        }
+
+        // Validar paginación
+        if (filter.getPageNumber() < 0) {
+            filter.setPageNumber(0);
+        }
+
+        if (filter.getPageSize() <= 0 || filter.getPageSize() > 100) {
+            filter.setPageSize(10);
+        }
+
+        // Validar valores de duración en minutos (no pueden ser negativos)
+        if (filter.getMinDurationMinutes() != null && filter.getMinDurationMinutes() < 0) {
+            filter.setMinDurationMinutes(0);
+        }
+
+        if (filter.getMaxDurationMinutes() != null && filter.getMaxDurationMinutes() < 0) {
+            filter.setMaxDurationMinutes(null);
+        }
+    }
     private void serviceExistsByName(String serviceName){
         boolean serviceExists = serviceRepository.existsByServiceName(serviceName);
         if (serviceExists){
