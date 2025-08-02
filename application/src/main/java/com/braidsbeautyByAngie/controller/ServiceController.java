@@ -5,6 +5,7 @@ import com.braidsbeautyByAngie.aggregates.request.RequestService;
 import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
+import com.braidsbeautyByAngie.aggregates.response.services.ServiceFilterOptionsDTO;
 import com.braidsbeautyByAngie.auth.RequireRole;
 import com.braidsbeautyByAngie.ports.in.ServiceServiceIn;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
@@ -206,5 +207,16 @@ public class ServiceController {
         ResponseListPageableService response = serviceService.filterServicesIn(filter);
 
         return ResponseEntity.ok(ApiResponse.ok("Services with promotions", response));
+    }
+    @Operation(summary = "Get service filter options",
+            description = "Returns all available filter options for services including categories, price ranges, duration ranges, and available employees")
+    @GetMapping("/filter-options")
+    public ResponseEntity<ApiResponse> getServiceFilterOptions() {
+            ServiceFilterOptionsDTO filterOptions = serviceService.getServiceFilterOptionsIn();
+
+            return ResponseEntity.ok(ApiResponse.ok(
+                    "Service filter options retrieved successfully",
+                    filterOptions
+            ));
     }
 }

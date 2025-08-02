@@ -4,6 +4,7 @@ import com.braidsbeautyByAngie.aggregates.constants.ReservationErrorEnum;
 import com.braidsbeautyByAngie.aggregates.dto.PromotionDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceCategoryDTO;
 import com.braidsbeautyByAngie.aggregates.dto.ServiceDTO;
+import com.braidsbeautyByAngie.aggregates.dto.rest.EmployeeDto;
 import com.braidsbeautyByAngie.aggregates.request.RequestService;
 import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseCategoryWIthoutServices;
@@ -11,6 +12,8 @@ import com.braidsbeautyByAngie.aggregates.response.categories.ResponseSubCategor
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
 
+import com.braidsbeautyByAngie.aggregates.response.services.ServiceEmployeeOptionDTO;
+import com.braidsbeautyByAngie.aggregates.response.services.ServiceFilterOptionsDTO;
 import com.braidsbeautyByAngie.entity.ServiceCategoryEntity;
 import com.braidsbeautyByAngie.entity.ServiceEntity;
 
@@ -23,6 +26,7 @@ import com.braidsbeautyByAngie.repository.ServiceRepository;
 
 import com.braidsbeautyByAngie.ports.out.ServiceServiceOut;
 
+import com.braidsbeautyByAngie.rest.RestUsersAdapter;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.Constants;
 import com.braidsbeautybyangie.sagapatternspringboot.aggregates.aggregates.util.ValidateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +54,7 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
     private final ServiceCategoryMapper serviceCategoryMapper;
     private final PromotionMapper promotionMapper;
 
+    private final RestUsersAdapter restUsersAdapter;
     @Override
     public ServiceDTO createServiceOut(RequestService requestService) {
         log.info("Creating service with name: {}", requestService.getServiceName());
@@ -299,6 +302,105 @@ public class ServiceServiceAdapter implements ServiceServiceOut {
         validateServiceFilterRequest(filter);
 
         return serviceRepository.filterServices(filter);
+    }
+    @Override
+    public ServiceFilterOptionsDTO getServiceFilterOptionsOut() {
+        log.info("Getting service filter options with employees");
+
+        try {
+            // 1. Obtener opciones básicas desde el repositorio (categorías, precios, duración)
+            ServiceFilterOptionsDTO filterOptions = serviceRepository.getServiceFilterOptions();
+
+            // 2. Obtener empleados desde el microservicio de usuarios
+            List<ServiceEmployeeOptionDTO> employees = getEmployeeOptions();
+
+            // 3. Establecer la lista de empleados en las opciones de filtrado
+            filterOptions.setEmployees(employees);
+
+            log.info("Service filter options retrieved successfully with {} employees", employees.size());
+            return filterOptions;
+
+        } catch (Exception e) {
+            log.error("Error getting service filter options: {}", e.getMessage(), e);
+
+            // En caso de error con el FeignClient, devolver al menos las opciones básicas
+            ServiceFilterOptionsDTO basicOptions = serviceRepository.getServiceFilterOptions();
+            basicOptions.setEmployees(new ArrayList<>());
+
+            log.warn("Returning basic filter options without employees due to error");
+            return basicOptions;
+        }
+    }
+    /**
+     * Obtiene los empleados disponibles para filtrado desde el microservicio de usuarios
+     */
+    private List<ServiceEmployeeOptionDTO> getEmployeeOptions() {
+        try {
+            log.info("Fetching employees from user microservice");
+
+            // Llamar al microservicio de usuarios para obtener todos los empleados activos
+            List<EmployeeDto> response = restUsersAdapter.getAllEmployees().getData();
+
+            if (response != null) {
+                // Convertir a EmployeeOption para el filtrado
+                List<ServiceEmployeeOptionDTO> employeeOptions = response.stream()
+                        .map(this::mapToEmployeeOption)
+                        .filter(Objects::nonNull) // Filtrar nulos por si acaso
+                        .collect(Collectors.toList());
+
+                log.info("Successfully retrieved {} employees for filtering", employeeOptions.size());
+                return employeeOptions;
+            } else {
+                log.warn("Empty or null response from employee service");
+                return new ArrayList<>();
+            }
+
+        } catch (Exception e) {
+            log.error("Error fetching employees from user microservice: {}", e.getMessage(), e);
+
+            // En caso de error, devolver lista vacía para no romper el filtrado
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Mapea EmployeeFilterResponse a EmployeeOption
+     */
+    private ServiceEmployeeOptionDTO mapToEmployeeOption(EmployeeDto employeeResponse) {
+        if (employeeResponse == null) {
+            return null;
+        }
+
+        try {
+            // Construir el nombre del empleado
+            String employeeName = employeeResponse.getPerson().getFullName();
+            if (employeeName == null || employeeName.trim().isEmpty()) {
+                // Fallback al nombre de la persona si el employeeName está vacío
+                if (employeeResponse.getPerson() != null) {
+                    employeeName = employeeResponse.getPerson().getFullName();
+                }
+            }
+
+            // Obtener la especialidad del tipo de empleado
+            String specialty = null;
+            if (employeeResponse.getEmployeeType() != null) {
+                specialty = employeeResponse.getEmployeeType().getValue();
+            }
+
+            return ServiceEmployeeOptionDTO.builder()
+                    .id(employeeResponse.getId())
+                    .name(employeeName != null ? employeeName : "Empleado sin nombre")
+                    .specialty(specialty)
+                    .employeeImage(employeeResponse.getEmployeeImage())
+                    .yearsExperience(null) // Esto se podría calcular si tienes fecha de inicio
+                    .rating(null) // Esto se podría obtener de un sistema de calificaciones
+                    .selected(false)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Error mapping employee response to option: {}", e.getMessage(), e);
+            return null;
+        }
     }
     private void validateServiceFilterRequest(RequestServiceFilter filter) {
         // Validar rangos de precio

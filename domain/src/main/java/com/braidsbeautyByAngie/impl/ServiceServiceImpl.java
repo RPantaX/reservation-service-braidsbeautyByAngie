@@ -5,6 +5,7 @@ import com.braidsbeautyByAngie.aggregates.request.RequestService;
 import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
+import com.braidsbeautyByAngie.aggregates.response.services.ServiceFilterOptionsDTO;
 import com.braidsbeautyByAngie.ports.in.ServiceServiceIn;
 import com.braidsbeautyByAngie.ports.out.ServiceServiceOut;
 import lombok.RequiredArgsConstructor;
@@ -51,5 +52,10 @@ public class ServiceServiceImpl implements ServiceServiceIn {
     @Override
     public ResponseListPageableService filterServicesIn(RequestServiceFilter filter) {
         return serviceServiceOut.filterServicesOut(filter);
+    }
+
+    @Override
+    public ServiceFilterOptionsDTO getServiceFilterOptionsIn() {
+        return serviceServiceOut.getServiceFilterOptionsOut();
     }
 }

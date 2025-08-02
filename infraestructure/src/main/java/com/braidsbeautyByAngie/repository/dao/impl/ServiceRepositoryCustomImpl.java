@@ -5,8 +5,7 @@ import com.braidsbeautyByAngie.aggregates.dto.ServiceCategoryDTO;
 import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseCategoryWIthoutServices;
 import com.braidsbeautyByAngie.aggregates.response.categories.ResponseSubCategory;
-import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
-import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
+import com.braidsbeautyByAngie.aggregates.response.services.*;
 import com.braidsbeautyByAngie.entity.*;
 import com.braidsbeautyByAngie.mapper.PromotionMapper;
 import com.braidsbeautyByAngie.mapper.ServiceCategoryMapper;
@@ -26,6 +25,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
+
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -117,6 +118,139 @@ public class ServiceRepositoryCustomImpl implements ServiceRepositoryCustom {
                 .totalPages(page.getTotalPages())
                 .totalElements(page.getTotalElements())
                 .end(page.isLast())
+                .build();
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public ServiceFilterOptionsDTO getServiceFilterOptions() {
+        log.info("Getting service filter options");
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        // ============================================================================
+        // 1. OBTENER CATEGORÍAS CON CONTEO DE SERVICIOS
+        // ============================================================================
+        List<ServiceCategoryOptionDTO> categories = getCategoriesWithServiceCount(cb);
+
+        // ============================================================================
+        // 2. OBTENER RANGO DE PRECIOS
+        // ============================================================================
+        ServicePriceRangeDTO priceRange = getPriceRange(cb);
+
+        // ============================================================================
+        // 3. OBTENER RANGO DE DURACIÓN
+        // ============================================================================
+        ServiceDurationRangeDTO durationRange = getDurationRange(cb);
+
+        log.info("Filter options retrieved: {} categories, price range: {}-{}, duration range: {}-{} minutes",
+                categories.size(), priceRange.getMin(), priceRange.getMax(),
+                durationRange.getMinMinutes(), durationRange.getMaxMinutes());
+
+        return ServiceFilterOptionsDTO.builder()
+                .categories(categories)
+                .priceRange(priceRange)
+                .durationRange(durationRange)
+                .employees(new ArrayList<>()) // Se llenará desde el servicio
+                .build();
+    }
+
+    /**
+     * Obtiene las categorías con el conteo de servicios activos
+     */
+    private List<ServiceCategoryOptionDTO> getCategoriesWithServiceCount(CriteriaBuilder cb) {
+        // Consulta para obtener categorías con conteo de servicios
+        CriteriaQuery<Object[]> categoryQuery = cb.createQuery(Object[].class);
+        Root<ServiceCategoryEntity> categoryRoot = categoryQuery.from(ServiceCategoryEntity.class);
+        Join<ServiceCategoryEntity, ServiceEntity> serviceJoin = categoryRoot.join("serviceEntities", JoinType.LEFT);
+
+        // Filtrar solo categorías y servicios activos
+        Predicate categoryActive = cb.isTrue(categoryRoot.get("state"));
+        Predicate serviceActive = cb.or(
+                cb.isNull(serviceJoin.get("serviceId")), // Categorías sin servicios
+                cb.isTrue(serviceJoin.get("state")) // Servicios activos
+        );
+
+        categoryQuery.multiselect(
+                categoryRoot.get("serviceCategoryId"),
+                categoryRoot.get("serviceCategoryName"),
+                categoryRoot.get("parentCategory").get("serviceCategoryId"),
+                cb.count(serviceJoin.get("serviceId"))
+        );
+
+        categoryQuery.where(cb.and(categoryActive, serviceActive));
+        categoryQuery.groupBy(
+                categoryRoot.get("serviceCategoryId"),
+                categoryRoot.get("serviceCategoryName"),
+                categoryRoot.get("parentCategory").get("serviceCategoryId")
+        );
+        categoryQuery.orderBy(cb.asc(categoryRoot.get("serviceCategoryName")));
+
+        List<Object[]> categoryResults = entityManager.createQuery(categoryQuery).getResultList();
+
+        return categoryResults.stream()
+                .map(result -> ServiceCategoryOptionDTO.builder()
+                        .id((Long) result[0])
+                        .name((String) result[1])
+                        .parentId((Long) result[2])
+                        .serviceCount(((Long) result[3]).intValue())
+                        .selected(false)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene el rango de precios de servicios activos
+     */
+    private ServicePriceRangeDTO getPriceRange(CriteriaBuilder cb) {
+        CriteriaQuery<Object[]> priceQuery = cb.createQuery(Object[].class);
+        Root<ServiceEntity> serviceRoot = priceQuery.from(ServiceEntity.class);
+
+        priceQuery.multiselect(
+                cb.min(serviceRoot.get("servicePrice")),
+                cb.max(serviceRoot.get("servicePrice"))
+        );
+
+        priceQuery.where(cb.isTrue(serviceRoot.get("state")));
+
+        Object[] priceResult = entityManager.createQuery(priceQuery).getSingleResult();
+
+        BigDecimal minPrice = (BigDecimal) priceResult[0];
+        BigDecimal maxPrice = (BigDecimal) priceResult[1];
+
+        return ServicePriceRangeDTO.builder()
+                .min(minPrice != null ? minPrice : BigDecimal.ZERO)
+                .max(maxPrice != null ? maxPrice : BigDecimal.ZERO)
+                .build();
+    }
+
+    /**
+     * Obtiene el rango de duración en minutos de servicios activos
+     */
+    private ServiceDurationRangeDTO getDurationRange(CriteriaBuilder cb) {
+        CriteriaQuery<Object[]> durationQuery = cb.createQuery(Object[].class);
+        Root<ServiceEntity> serviceRoot = durationQuery.from(ServiceEntity.class);
+
+        durationQuery.multiselect(
+                cb.min(serviceRoot.get("durationTimeAprox")),
+                cb.max(serviceRoot.get("durationTimeAprox"))
+        );
+
+        durationQuery.where(cb.isTrue(serviceRoot.get("state")));
+
+        Object[] durationResult = entityManager.createQuery(durationQuery).getSingleResult();
+
+        LocalTime minDuration = (LocalTime) durationResult[0];
+        LocalTime maxDuration = (LocalTime) durationResult[1];
+
+        // Convertir LocalTime a minutos
+        int minMinutes = minDuration != null ?
+                (minDuration.getHour() * 60 + minDuration.getMinute()) : 0;
+        int maxMinutes = maxDuration != null ?
+                (maxDuration.getHour() * 60 + maxDuration.getMinute()) : 0;
+
+        return ServiceDurationRangeDTO.builder()
+                .minMinutes(minMinutes)
+                .maxMinutes(maxMinutes)
                 .build();
     }
     private void addServiceFilters(CriteriaBuilder cb, Root<ServiceEntity> serviceRoot,

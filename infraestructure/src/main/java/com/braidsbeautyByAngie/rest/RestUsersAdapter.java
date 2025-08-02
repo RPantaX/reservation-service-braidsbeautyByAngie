@@ -15,4 +15,6 @@ public interface RestUsersAdapter {
 
     @PostMapping("/v1/user-service/employee/list/by-ids")
     ApiResponse<List<EmployeeDto>> listReservationById(@RequestBody List<Long> employeeIds);
+    @GetMapping("/v1/user-service/employee/list/all")
+    ApiResponse<List<EmployeeDto>> getAllEmployees();
 }

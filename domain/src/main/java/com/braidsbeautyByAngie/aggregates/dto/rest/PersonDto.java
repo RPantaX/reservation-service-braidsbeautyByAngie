@@ -35,6 +35,6 @@ public class PersonDto {
 
     // Campo calculado para nombre completo
     public String getFullName() {
-        return name + " " + lastName;
+        return (name != null ? name : "") + " " + (lastName != null ? lastName : "");
     }
 }

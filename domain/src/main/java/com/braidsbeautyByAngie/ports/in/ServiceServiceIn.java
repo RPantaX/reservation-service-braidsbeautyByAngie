@@ -5,6 +5,7 @@ import com.braidsbeautyByAngie.aggregates.request.RequestService;
 import com.braidsbeautyByAngie.aggregates.request.RequestServiceFilter;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseListPageableService;
 import com.braidsbeautyByAngie.aggregates.response.services.ResponseService;
+import com.braidsbeautyByAngie.aggregates.response.services.ServiceFilterOptionsDTO;
 
 import java.util.Optional;
 
@@ -16,4 +17,5 @@ public interface ServiceServiceIn {
     ResponseListPageableService listServiceByPageIn(int pageNumber, int pageSize, String orderBy, String sortDir);
     ResponseListPageableService listServiceByPageByCategoryIn(int pageNumber, int pageSize, String orderBy, String sortDir, Long categoryId);
     ResponseListPageableService filterServicesIn(RequestServiceFilter filter);
+    ServiceFilterOptionsDTO getServiceFilterOptionsIn();
 }
