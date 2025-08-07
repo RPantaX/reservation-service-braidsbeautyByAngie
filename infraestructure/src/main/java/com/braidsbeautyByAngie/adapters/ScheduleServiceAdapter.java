@@ -247,7 +247,7 @@ public class ScheduleServiceAdapter implements ScheduleServiceOut {
                 .collect(Collectors.toList());
 
         // Llamar al microservicio de usuarios para obtener datos de empleados
-        List<EmployeeDto> employeeDtoList = (List<EmployeeDto>) restUsersAdapter.listReservationById(employeeIds).getData();
+        List<EmployeeDto> employeeDtoList = restUsersAdapter.listReservationById(employeeIds).getData();
 
         log.info("Total schedules found from date {}: {}", fromDate, scheduleEntityList.size());
 
